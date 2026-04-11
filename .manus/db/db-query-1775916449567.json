@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `bank_transactions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`transactionDate` date NOT NULL,\n\t`description` text NOT NULL,\n\t`transactionType` enum('NEFT','RTGS','IMPS','Cash','Credit Card','UPI') NOT NULL,\n\t`withdrawal` decimal(15,2) DEFAULT '0.00',\n\t`deposit` decimal(15,2) DEFAULT '0.00',\n\t`balance` decimal(15,2),\n\t`reconciliationStatus` enum('matched','unmatched','pending') DEFAULT 'pending',\n\t`referenceNo` varchar(100),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `bank_transactions_id` PRIMARY KEY(`id`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user bQEYbMBDbQ3KPm7.98d11e94d82a --database 5eGjBPBASNJYbjmGqsiMsX --execute CREATE TABLE `bank_transactions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`transactionDate` date NOT NULL,\n\t`description` text NOT NULL,\n\t`transactionType` enum('NEFT','RTGS','IMPS','Cash','Credit Card','UPI') NOT NULL,\n\t`withdrawal` decimal(15,2) DEFAULT '0.00',\n\t`deposit` decimal(15,2) DEFAULT '0.00',\n\t`balance` decimal(15,2),\n\t`reconciliationStatus` enum('matched','unmatched','pending') DEFAULT 'pending',\n\t`referenceNo` varchar(100),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `bank_transactions_id` PRIMARY KEY(`id`)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3472
+}

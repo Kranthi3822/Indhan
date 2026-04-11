@@ -1,28 +1,411 @@
+import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import {
+  getDashboardKPIs, getDailyTrend,
+  getAllCustomers, getCustomerById, createCustomer, updateCustomer, getCustomerReceivables, recordCustomerPayment,
+  getAllProducts, createProduct, updateProductStock, updateProduct, getLowStockProducts,
+  getPurchaseOrders, createPurchaseOrder, updatePurchaseOrderStatus,
+  getExpenses, createExpense, updateExpenseApproval, getExpenseSummaryByCategory,
+  getBankTransactions, createBankTransaction, updateBankReconciliation, getBankSummary,
+  getWeighBridgeRecords, createWeighBridgeRecord, getWeighBridgeSummary,
+  getDailyReports, getDailyReport, upsertDailyReport,
+  getPLReport,
+  getSalesTransactions, createSalesTransaction,
+} from "./db";
 
+import { invokeLLM } from "./_core/llm";
+
+// ─── Shared date range input ──────────────────────────────────────────────────
+const dateRangeInput = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+});
+
+// ─── Dashboard Router ─────────────────────────────────────────────────────────
+const dashboardRouter = router({
+  kpis: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getDashboardKPIs(input.startDate, input.endDate);
+  }),
+  trend: protectedProcedure.input(z.object({ days: z.number().default(30) })).query(async ({ input }) => {
+    return getDailyTrend(input.days);
+  }),
+  dailySalesTrend: protectedProcedure.input(z.object({ days: z.number().default(30) })).query(async ({ input }) => {
+    return getDailyTrend(input.days);
+  }),
+});
+
+// ─── Customers Router ─────────────────────────────────────────────────────────
+const customersRouter = router({
+  list: protectedProcedure.query(async () => getAllCustomers()),
+  receivables: protectedProcedure.query(async () => getCustomerReceivables()),
+  topByOutstanding: protectedProcedure.query(async () => getCustomerReceivables()),
+  byId: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => getCustomerById(input.id)),
+  create: protectedProcedure.input(z.object({
+    name: z.string().min(1),
+    contactPerson: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().optional(),
+    creditLimit: z.number().default(0),
+    paymentTermsDays: z.number().default(30),
+  })).mutation(async ({ input }) => {
+    await createCustomer({ ...input, creditLimit: String(input.creditLimit) });
+    return { success: true };
+  }),
+  update: protectedProcedure.input(z.object({
+    id: z.number(),
+    name: z.string().optional(),
+    contactPerson: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().optional(),
+    creditLimit: z.number().optional(),
+    paymentTermsDays: z.number().optional(),
+    isActive: z.boolean().optional(),
+  })).mutation(async ({ input }) => {
+    const { id, creditLimit, ...rest } = input;
+    const data: Record<string, unknown> = { ...rest };
+    if (creditLimit !== undefined) data.creditLimit = String(creditLimit);
+    await updateCustomer(id, data);
+    return { success: true };
+  }),
+  recordPayment: protectedProcedure.input(z.object({
+    customerId: z.number(),
+    paymentDate: z.string(),
+    amount: z.number(),
+    paymentMethod: z.enum(["cash", "bank", "online"]),
+    referenceNo: z.string().optional(),
+    notes: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await recordCustomerPayment({ ...input, amount: String(input.amount) });
+    return { success: true };
+  }),
+});
+
+// ─── Inventory Router ─────────────────────────────────────────────────────────
+const inventoryRouter = router({
+  products: protectedProcedure.query(async () => getAllProducts()),
+  list: protectedProcedure.query(async () => getAllProducts()),
+  lowStock: protectedProcedure.query(async () => getLowStockProducts()),
+  addProduct: protectedProcedure.input(z.object({
+    name: z.string().min(1),
+    category: z.enum(["fuel", "lubricant", "other"]).default("fuel"),
+    unit: z.string().default("L"),
+    currentStock: z.string().default("0"),
+    minStockLevel: z.string().default("0"),
+    maxStockLevel: z.string().default("10000"),
+    costPrice: z.string().default("0"),
+    sellingPrice: z.string().default("0"),
+  })).mutation(async ({ input }) => {
+    await createProduct({
+      name: input.name,
+      category: input.category,
+      unit: input.unit,
+      currentStock: input.currentStock,
+      purchasePrice: input.costPrice,
+      sellingPrice: input.sellingPrice,
+      margin: "0",
+      reorderLevel: input.minStockLevel,
+    });
+    return { success: true };
+  }),
+  updateStock: protectedProcedure.input(z.object({
+    id: z.number(),
+    newStock: z.number(),
+  })).mutation(async ({ input }) => {
+    await updateProductStock(input.id, input.newStock);
+    return { success: true };
+  }),
+  updateProduct: protectedProcedure.input(z.object({
+    id: z.number(),
+    name: z.string().optional(),
+    purchasePrice: z.number().optional(),
+    sellingPrice: z.number().optional(),
+    margin: z.number().optional(),
+    reorderLevel: z.number().optional(),
+  })).mutation(async ({ input }) => {
+    const { id, purchasePrice, sellingPrice, margin, reorderLevel, ...rest } = input;
+    const data: Record<string, unknown> = { ...rest };
+    if (purchasePrice !== undefined) data.purchasePrice = String(purchasePrice);
+    if (sellingPrice !== undefined) data.sellingPrice = String(sellingPrice);
+    if (margin !== undefined) data.margin = String(margin);
+    if (reorderLevel !== undefined) data.reorderLevel = String(reorderLevel);
+    await updateProduct(id, data);
+    return { success: true };
+  }),
+  purchaseOrders: protectedProcedure.query(async () => getPurchaseOrders()),
+  createPurchaseOrder: protectedProcedure.input(z.object({
+    orderDate: z.string(),
+    deliveryDate: z.string().optional(),
+    supplier: z.string().default("Indian Oil Corporation"),
+    productId: z.number(),
+    quantityOrdered: z.union([z.string(), z.number()]).transform(v => String(v)),
+    unitPrice: z.union([z.string(), z.number()]).transform(v => String(v)),
+    totalAmount: z.union([z.string(), z.number()]).transform(v => String(v)),
+    invoiceNo: z.string().optional(),
+    notes: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await createPurchaseOrder({ ...input });
+    return { success: true };
+  }),
+  updatePurchaseOrder: protectedProcedure.input(z.object({
+    id: z.number(),
+    status: z.enum(["pending", "delivered", "partial", "cancelled"]),
+    quantityReceived: z.number().optional(),
+  })).mutation(async ({ input }) => {
+    await updatePurchaseOrderStatus(input.id, input.status, input.quantityReceived);
+    return { success: true };
+  }),
+});
+
+// ─── Expenses Router ──────────────────────────────────────────────────────────
+const expensesRouter = router({
+  list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getExpenses(input.startDate, input.endDate);
+  }),
+  summary: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getExpenseSummaryByCategory(input.startDate, input.endDate);
+  }),
+  create: protectedProcedure.input(z.object({
+    expenseDate: z.string(),
+    headAccount: z.enum(["Operating Activities", "Financing Activities", "Investing Activities", "Acquisition", "Establishment", "REPO"]),
+    subHeadAccount: z.enum(["Wages", "Admin", "Electricity", "Hospitality", "Maintenance", "Performance Bonus", "Fuel", "Transport", "POS Charges", "Bank Charges", "Purchase", "Interest", "Principal", "Charges"]),
+    description: z.string().min(1),
+    amount: z.number().positive(),
+    transactionStatus: z.enum(["Paid", "Payable", "DuePayable", "DuePaid"]).default("Paid"),
+    modeOfPayment: z.enum(["Bank", "Cash", "Fuel", "Online"]).default("Bank"),
+    paidBy: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await createExpense({ ...input, amount: String(input.amount) });
+    return { success: true };
+  }),
+  approve: protectedProcedure.input(z.object({
+    id: z.number(),
+    status: z.enum(["approved", "rejected"]),
+    approvedBy: z.string(),
+  })).mutation(async ({ input }) => {
+    await updateExpenseApproval(input.id, input.status, input.approvedBy);
+    return { success: true };
+  }),
+});
+
+// ─── Bank Transactions Router ─────────────────────────────────────────────────
+const bankRouter = router({
+  list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getBankTransactions(input.startDate, input.endDate);
+  }),
+  summary: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getBankSummary(input.startDate, input.endDate);
+  }),
+  create: protectedProcedure.input(z.object({
+    transactionDate: z.string(),
+    description: z.string().min(1),
+    transactionType: z.enum(["NEFT", "RTGS", "IMPS", "Cash", "Credit Card", "UPI"]),
+    withdrawal: z.number().default(0),
+    deposit: z.number().default(0),
+    balance: z.number().optional(),
+    referenceNo: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await createBankTransaction({
+      ...input,
+      withdrawal: String(input.withdrawal),
+      deposit: String(input.deposit),
+      balance: input.balance !== undefined ? String(input.balance) : undefined,
+    });
+    return { success: true };
+  }),
+  reconcile: protectedProcedure.input(z.object({
+    id: z.number(),
+    status: z.enum(["matched", "unmatched", "pending"]),
+  })).mutation(async ({ input }) => {
+    await updateBankReconciliation(input.id, input.status);
+    return { success: true };
+  }),
+});
+
+// ─── Weigh Bridge Router ──────────────────────────────────────────────────────
+const weighBridgeRouter = router({
+  list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getWeighBridgeRecords(input.startDate, input.endDate);
+  }),
+  summary: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getWeighBridgeSummary(input.startDate, input.endDate);
+  }),
+  create: protectedProcedure.input(z.object({
+    ticketDate: z.string(),
+    ticketNo: z.number().optional(),
+    vehicleNo: z.string().optional(),
+    noOfVehicles: z.number().default(1),
+    weight: z.number().optional(),
+    amount: z.number().optional(),
+    cumulativeAmount: z.number().optional(),
+    remarks: z.string().optional(),
+    bankDeposit: z.number().optional(),
+  })).mutation(async ({ input }) => {
+    await createWeighBridgeRecord({
+      ...input,
+      weight: input.weight !== undefined ? String(input.weight) : undefined,
+      amount: input.amount !== undefined ? String(input.amount) : undefined,
+      cumulativeAmount: input.cumulativeAmount !== undefined ? String(input.cumulativeAmount) : undefined,
+      bankDeposit: input.bankDeposit !== undefined ? String(input.bankDeposit) : undefined,
+    });
+    return { success: true };
+  }),
+});
+
+// ─── Daily Reports Router ─────────────────────────────────────────────────────
+const reconciliationRouter = router({
+  list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getDailyReports(input.startDate, input.endDate);
+  }),
+  byDate: protectedProcedure.input(z.object({ reportDate: z.string() })).query(async ({ input }) => {
+    return getDailyReport(input.reportDate);
+  }),
+  upsert: protectedProcedure.input(z.object({
+    reportDate: z.string(),
+    openingStockPetrol: z.number().default(0),
+    openingStockDiesel: z.number().default(0),
+    closingStockPetrol: z.number().default(0),
+    closingStockDiesel: z.number().default(0),
+    petrolSalesQty: z.number().default(0),
+    dieselSalesQty: z.number().default(0),
+    totalSalesValue: z.number().default(0),
+    cashCollected: z.number().default(0),
+    cardCollected: z.number().default(0),
+    onlineCollected: z.number().default(0),
+    creditSales: z.number().default(0),
+    totalCollected: z.number().default(0),
+    totalExpenses: z.number().default(0),
+    bankDeposit: z.number().default(0),
+    cashBalance: z.number().default(0),
+    grossProfit: z.number().default(0),
+    netProfit: z.number().default(0),
+    reconciliationStatus: z.enum(["pending", "reconciled", "discrepancy"]).default("pending"),
+    notes: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    const { reportDate, reconciliationStatus, notes, ...nums } = input;
+    const strData: Parameters<typeof upsertDailyReport>[0] = {
+      reportDate,
+      ...(reconciliationStatus ? { reconciliationStatus } : {}),
+      ...(notes ? { notes } : {}),
+      ...Object.fromEntries(Object.entries(nums).map(([k, v]) => [k, String(v)])),
+    };
+    await upsertDailyReport(strData);
+    return { success: true };
+  }),
+});
+
+// ─── P&L Router ───────────────────────────────────────────────────────────────
+const plRouter = router({
+  report: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getPLReport(input.startDate, input.endDate);
+  }),
+});
+
+// ─── Sales Router ─────────────────────────────────────────────────────────────
+const salesRouter = router({
+  list: protectedProcedure.input(z.object({
+    startDate: z.string(),
+    endDate: z.string(),
+    customerId: z.number().optional(),
+  })).query(async ({ input }) => {
+    return getSalesTransactions(input.startDate, input.endDate, input.customerId);
+  }),
+  create: protectedProcedure.input(z.object({
+    transactionDate: z.string(),
+    customerId: z.number().optional(),
+    productId: z.number(),
+    quantity: z.number(),
+    unitPrice: z.number(),
+    totalAmount: z.number(),
+    paymentMethod: z.enum(["cash", "credit_card", "online", "credit", "fuel"]),
+    paymentStatus: z.enum(["paid", "payable", "due_payable", "due_paid", "received"]).default("paid"),
+    pumpNo: z.string().optional(),
+    paidBy: z.string().optional(),
+    notes: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await createSalesTransaction({
+      ...input,
+      quantity: String(input.quantity),
+      unitPrice: String(input.unitPrice),
+      totalAmount: String(input.totalAmount),
+    });
+    return { success: true };
+  }),
+});
+
+// ─── Sathi AI Router ─────────────────────────────────────────────────────────
+const sathiRouter = router({
+  ask: protectedProcedure.input(z.object({ question: z.string() })).mutation(async ({ input }) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+    const kpis = await getDashboardKPIs(monthStart, today).catch(() => null);
+    const lowStock = await getLowStockProducts().catch(() => []);
+    const receivables = await getCustomerReceivables().catch(() => []);
+    const expSummary = await getExpenseSummaryByCategory(monthStart, today).catch(() => []);
+
+    const context = `
+You are Sathi, the AI assistant for Indhan — a fuel station management platform used at BEES Fuel Station.
+Today's date: ${today}
+
+Current KPIs (this month):
+- Total Sales: Rs ${kpis?.totalSales ?? 'N/A'}
+- Total Expenses: Rs ${kpis?.totalExpenses ?? 'N/A'}
+- Gross Profit: Rs ${kpis?.grossProfit ?? 'N/A'}
+- Cash Balance: Rs ${kpis?.cashBalance ?? 'N/A'}
+- Outstanding Receivables: Rs ${kpis?.totalReceivables ?? 'N/A'}
+- Total Collected: Rs ${kpis?.totalCollected ?? 'N/A'}
+
+Fuel Margins: Petrol Rs 3.95/litre, Diesel Rs 2.49/litre
+Supplier: Indian Oil Corporation
+
+Low Stock Items: ${lowStock.length > 0 ? lowStock.map((p: any) => p.name + ' (' + p.currentStock + ' ' + p.unit + ')').join(', ') : 'None'}
+
+Top Customer Receivables:
+${receivables.slice(0, 5).map((r: any) => `- ${r.name}: Rs ${r.outstandingBalance}`).join('\n')}
+
+Expense Summary (this month):
+${expSummary.map((e: any) => `- ${e.category}: Rs ${e.totalAmount}`).join('\n')}
+
+Expense Categories: Wages, Admin, Electricity, Hospitality, Maintenance, Performance Bonus
+
+Answer the user's question concisely and helpfully. Use Indian number formatting (lakhs, crores). Be direct and actionable.
+`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: context },
+        { role: "user", content: input.question },
+      ],
+    });
+
+    const answer = (response.choices?.[0]?.message?.content as string) ?? "I could not process your query. Please try again.";
+    return { answer };
+  }),
+});
+
+// ─── App Router ────────────────────────────────────────────────────────────────────────────────
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
-
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  dashboard: dashboardRouter,
+  customers: customersRouter,
+  inventory: inventoryRouter,
+  expenses: expensesRouter,
+  bank: bankRouter,
+  weighBridge: weighBridgeRouter,
+  reconciliation: reconciliationRouter,
+  pl: plRouter,
+  sales: salesRouter,
+  sathi: sathiRouter,
 });
 
 export type AppRouter = typeof appRouter;

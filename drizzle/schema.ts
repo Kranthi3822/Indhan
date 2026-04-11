@@ -35,6 +35,7 @@ export const customers = mysqlTable("customers", {
   email: varchar("email", { length: 320 }),
   creditLimit: decimal("creditLimit", { precision: 15, scale: 2 }).default("0.00"),
   paymentTermsDays: int("paymentTermsDays").default(30),
+  outstandingBalance: decimal("outstandingBalance", { precision: 15, scale: 2 }).default("0.00"),
   isActive: boolean("isActive").default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

@@ -38,8 +38,9 @@ export default function Expenses() {
     billNo: "",
   });
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  const monthStart = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), "yyyy-MM-dd");
+  // Default to latest data month (March 2026) since current month has no data yet
+  const today = "2026-03-31";
+  const monthStart = "2026-03-01";
 
   const { data: expenses, refetch } = trpc.expenses.list.useQuery({ startDate: monthStart, endDate: today });
   const { data: summary } = trpc.expenses.summary.useQuery({ startDate: monthStart, endDate: today });

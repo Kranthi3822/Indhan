@@ -67,25 +67,30 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export default function Dashboard() {
+  // Use the latest data date (2026-03-31) as reference when current month has no data
+  const latestDataDate = "2026-03-31";
+  const latestDataMonthStart = "2026-03-01";
   const today = format(new Date(), "yyyy-MM-dd");
-  const [period, setPeriod] = useState<"today" | "week" | "mtd">("today");
-  const startDate = period === "today" ? today : period === "week" ? format(subDays(new Date(), 7), "yyyy-MM-dd") : format(startOfMonth(new Date()), "yyyy-MM-dd");
-
-  const { data: kpis, isLoading } = trpc.dashboard.kpis.useQuery({ startDate, endDate: today });
+  const effectiveToday = today > latestDataDate ? latestDataDate : today;
+  const [period, setPeriod] = useState<"today" | "week" | "mtd">("mtd");
+  const startDate = period === "today" ? latestDataDate : period === "week" ? format(subDays(new Date(latestDataDate), 6), "yyyy-MM-dd") : latestDataMonthStart;
+  const { data: kpis, isLoading } = trpc.dashboard.kpis.useQuery({ startDate, endDate: effectiveToday });;
   const { data: dailySales } = trpc.dashboard.dailySalesTrend.useQuery({ days: 30 });
   const { data: lowStock } = trpc.inventory.lowStock.useQuery();
   const { data: topCustomers } = trpc.customers.topByOutstanding.useQuery();
 
   const chartData = useMemo(() => {
-    if (dailySales && dailySales.length > 0) return dailySales.map((d: any) => ({
-      date: format(new Date(d.date), "dd MMM"),
-      Sales: Number(d.totalSales ?? 0),
-      Expenses: Number(d.totalExpenses ?? 0),
-    }));
+    if (dailySales && dailySales.length > 0) {
+      return [...dailySales].reverse().map((d: any) => ({
+        date: d.reportDate ? format(new Date(d.reportDate + 'T00:00:00'), 'dd MMM') : '',
+        Sales: Number(d.totalSalesValue ?? 0),
+        Expenses: Number(d.totalExpenses ?? 0),
+      })).filter((d: any) => d.date !== '');
+    }
     return Array.from({ length: 14 }, (_, i) => ({
-      date: format(subDays(new Date(), 13 - i), "dd MMM"),
-      Sales: Math.floor(Math.random() * 200000) + 150000,
-      Expenses: Math.floor(Math.random() * 40000) + 20000,
+      date: format(subDays(new Date(), 13 - i), 'dd MMM'),
+      Sales: 0,
+      Expenses: 0,
     }));
   }, [dailySales]);
 

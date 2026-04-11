@@ -12,7 +12,8 @@ const fmt = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
 export default function Reconciliation() {
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  // Default to latest data date (March 31, 2026) since current month has no data yet
+  const [selectedDate, setSelectedDate] = useState("2026-03-31");
   const [cashSalesInput, setCashSalesInput] = useState("");
   const [cardSalesInput, setCardSalesInput] = useState("");
   const [creditSalesInput, setCreditSalesInput] = useState("");

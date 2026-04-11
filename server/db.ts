@@ -77,12 +77,9 @@ export async function getDashboardKPIs(startDate: string, endDate: string) {
     sql`${dailyReports.reportDate} >= ${startDate} AND ${dailyReports.reportDate} <= ${endDate}`
   );
 
-  const recRows = await db.select({
-    totalReceivables: sql<number>`COALESCE(SUM(totalAmount), 0)`,
-  }).from(salesTransactions).where(
-    and(eq(salesTransactions.paymentMethod, 'credit'), eq(salesTransactions.paymentStatus, 'payable'))
-  );
-
+   const recRows = await db.select({
+    totalReceivables: sql<number>`COALESCE(SUM(outstandingBalance), 0)`,
+  }).from(customers).where(sql`outstandingBalance > 0`);
   const salesResult = salesRows[0];
   const recResult = recRows[0];
   return { ...salesResult, totalReceivables: recResult?.totalReceivables ?? 0 };

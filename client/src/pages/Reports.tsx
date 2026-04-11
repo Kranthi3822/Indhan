@@ -11,8 +11,9 @@ const fmt = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
 export default function Reports() {
-  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
-  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), "yyyy-MM-dd"));
+  // Default to latest data month (March 2026) since current month has no data yet
+  const [startDate, setStartDate] = useState("2026-03-01");
+  const [endDate, setEndDate] = useState("2026-03-31");
 
   const { data: trend } = trpc.dashboard.trend.useQuery({ days: 30 });
   const { data: expSummary } = trpc.expenses.summary.useQuery({ startDate, endDate });

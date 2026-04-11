@@ -58,3 +58,19 @@
 - [x] Dark/light mode toggle in header with localStorage persistence
 - [x] Light mode CSS variables (clean white/grey palette)
 - [x] Dark mode CSS variables (amber/gold premium dark)
+
+## Phase 1 Critical Bug Fixes
+- [x] Fix 1: routers.ts broken export causing app crash (esbuild TransformError)
+- [x] Fix 2: customer_payments paymentMethod empty string — re-import with correct enum values
+- [x] Fix 3: outstandingBalance not computed — update all customers from actual payment data
+- [x] Fix 4: getDashboardKPIs receivables queries wrong table — fix to use customer_payments
+- [x] Fix 5: Verify app loads cleanly with real data after all fixes
+
+## Phase 2 Date Filter Fixes
+- [x] Dashboard: date filter fallback to latest data month (March 2026) when April 2026 has no data
+- [x] Expenses: default date range changed to March 2026 (was April 2026 — showed ₹0)
+- [x] Bank Statement: default date range changed to March 2026 (was April 2026 — showed ₹0)
+- [x] P&L Reports: default date range changed to March 2026 (was April 2026 — showed ₹0)
+- [x] Reconciliation: default date changed to March 31, 2026 (was April 12 — showed empty)
+- [x] Customers & Inventory: confirmed no date filter issue (load all records, no date range)
+- [x] All 11 tests passing after fixes

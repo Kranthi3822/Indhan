@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { importRouter } from "../importRouter";
+import { syncFuelStockFromLatestReport } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -62,6 +63,8 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Sync fuel stock from latest daily report on startup so Inventory page always shows correct values
+    syncFuelStockFromLatestReport().catch(e => console.warn('[startup] syncFuelStock failed:', e.message));
   });
 }
 

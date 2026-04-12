@@ -537,3 +537,8 @@
 ## Deployment Build Fix
 - [x] Fix: vite-plugin-pwa workbox build failure — main bundle 3.5 MB exceeds default 2 MB precache limit; raised maximumFileSizeToCacheInBytes to 5 MiB in vite.config.ts
 - [x] Verified: production build now completes successfully (369 entries precached, sw.js generated)
+
+## Diesel Stock Display Bugs (Both Pages)
+- [x] Fix: Inventory page Diesel currentStock = 0 — syncFuelStockFromLatestReport now runs on server startup (server/_core/index.ts) AND after each reconciliation save
+- [x] Fix: Dashboard Fuel Intelligence Diesel stock = 0% — falls back to products.currentStock when no dip readings exist (db-fuel-intelligence.ts)
+- [x] Fix: Directly updated products.currentStock for Diesel to 6823.32 L and Petrol to 11920.19 L in DB

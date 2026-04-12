@@ -96,17 +96,17 @@ export async function getFuelIntelligence(
   const configs = await db.select().from(fuelConfig);
   const configMap = Object.fromEntries(configs.map((c: typeof configs[0]) => [c.fuelType, c]));
 
-  // Also pull actual retail/purchase prices from products table as the authoritative source
+  // Also pull actual retail/purchase prices AND currentStock from products table as the authoritative source
   const productPriceRows = await db.execute(sql`
-    SELECT name, purchasePrice, sellingPrice, margin
+    SELECT name, purchasePrice, sellingPrice, margin, currentStock
     FROM products WHERE category = 'fuel'
   `) as any;
   const productPrices = (productPriceRows[0] as any[]).reduce((acc: any, r: any) => {
     const name = String(r.name).toLowerCase();
-    if (name.includes('petrol')) acc.petrol = { retail: Number(r.sellingPrice), cost: Number(r.purchasePrice), margin: Number(r.margin) };
-    if (name.includes('diesel')) acc.diesel = { retail: Number(r.sellingPrice), cost: Number(r.purchasePrice), margin: Number(r.margin) };
+    if (name.includes('petrol')) acc.petrol = { retail: Number(r.sellingPrice), cost: Number(r.purchasePrice), margin: Number(r.margin), currentStock: Number(r.currentStock) };
+    if (name.includes('diesel')) acc.diesel = { retail: Number(r.sellingPrice), cost: Number(r.purchasePrice), margin: Number(r.margin), currentStock: Number(r.currentStock) };
     return acc;
-  }, {} as Record<string, { retail: number; cost: number; margin: number }>);
+  }, {} as Record<string, { retail: number; cost: number; margin: number; currentStock: number }>);
 
   // 2. Weighted Average Cost Price from purchase orders (delivered only)
   //    WACP = SUM(qty × unitPrice) / SUM(qty) for all delivered POs in period
@@ -293,13 +293,26 @@ export async function getFuelIntelligence(
     evapByFuel.diesel = avgStock * rate * days;
   }
 
+  // If no dip readings exist, synthesise a fallback dip object from products.currentStock
+  // (products.currentStock is synced from daily_reports.closingStock on server startup and after each reconciliation save)
+  const petrolDipFallback = latestPetrolDip ?? (
+    (productPrices.petrol?.currentStock ?? 0) > 0
+      ? { fuel_type: 'petrol', dip_litres: productPrices.petrol!.currentStock, reading_date: endDate }
+      : null
+  );
+  const dieselDipFallback = latestDieselDip ?? (
+    (productPrices.diesel?.currentStock ?? 0) > 0
+      ? { fuel_type: 'diesel', dip_litres: productPrices.diesel!.currentStock, reading_date: endDate }
+      : null
+  );
+
   // 8. Build per-fuel margin data
   const petrolData = buildFuelMarginData(
     "petrol",
     configMap["petrol"],
     petrolPurchase,
     petrolSales,
-    latestPetrolDip,
+    petrolDipFallback,
     evapByFuel.petrol ?? 0,
     productPrices.petrol,
     petrolAllocatedOpEx,
@@ -313,7 +326,7 @@ export async function getFuelIntelligence(
     configMap["diesel"],
     dieselPurchase,
     dieselSales,
-    latestDieselDip,
+    dieselDipFallback,
     evapByFuel.diesel ?? 0,
     productPrices.diesel,
     dieselAllocatedOpEx,

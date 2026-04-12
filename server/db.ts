@@ -675,10 +675,11 @@ export async function getDailyStockStatement(fromDate?: string, toDate?: string,
     const poReceiptsP = poReceipts.petrol;
     const poReceiptsD = poReceipts.diesel;
 
-    // Dip Variance = (Opening Stock + Purchased Receipts) − Manual Dip Reading
-    // Positive = stock loss/shrinkage, Negative = stock gain
-    const dipVarP = dip.petrol !== null ? (openP + poReceiptsP) - dip.petrol : null;
-    const dipVarD = dip.diesel !== null ? (openD + poReceiptsD) - dip.diesel : null;
+    // Dip Variance = Reported Closing Stock − Manual Dip Reading
+    // Positive = system shows more than dip (possible loss/evaporation)
+    // Negative = dip shows more than system (possible gain/meter error)
+    const dipVarP = dip.petrol !== null ? reportedCloseP - dip.petrol : null;
+    const dipVarD = dip.diesel !== null ? reportedCloseD - dip.diesel : null;
 
     return {
       date,

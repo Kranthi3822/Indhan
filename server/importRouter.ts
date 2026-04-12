@@ -5,6 +5,7 @@ import { getDb } from "./db";
 import {
   customers, expenses, bankTransactions, dailyReports, products, salesTransactions,
 } from "../drizzle/schema";
+import { upsertDipReading } from "./db-fuel-intelligence";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
@@ -119,6 +120,50 @@ importRouter.post("/api/import/excel", upload.single("file"), async (req, res) =
         } catch { /* skip */ }
       }
       results[`Daily Reports (${sn})`] = imported;
+    }
+
+    // ── 2b. Dip Readings — from "Daily Stock Statement" sheet (has Dip + Manual Dip Reading columns)
+    const dipSheets = wb.SheetNames.filter(n =>
+      /daily.stock|stock.statement|dip/i.test(n)
+    );
+    for (const sn of dipSheets) {
+      const rows = sheetToRows(wb, sn);
+      let dipsImported = 0;
+      for (const row of rows) {
+        const dateVal = row["Date"] ?? row["DATE"];
+        if (!dateVal) continue;
+        const reportDate = parseDate(dateVal);
+        if (reportDate === "Invalid Date") continue;
+        // Column F = "Dip" (physical dip stick reading, likely in KL or direct litres)
+        // Column G = "Manual Dip Reading" (the authoritative manual reading in litres)
+        // We prefer "Manual Dip Reading" as it is the operator-entered value
+        const manualDipPetrolRaw = row["Manual Dip Reading"] ?? row["MANUAL DIP READING"] ?? row["Manual Dip"] ?? null;
+        const dipPetrolRaw = row["Dip"] ?? row["DIP"] ?? row["Dip Reading"] ?? row["DIP READING"] ?? null;
+        // For diesel, look for diesel-specific columns (the sheet has both MS-Petrol and Diesel sections)
+        const manualDipDieselRaw = row["Manual Dip Reading (Diesel)"] ?? row["Diesel Manual Dip"] ?? row["Manual Dip Reading.1"] ?? null;
+        const dipDieselRaw = row["Dip (Diesel)"] ?? row["Diesel Dip"] ?? row["Dip.1"] ?? null;
+        try {
+          // Petrol dip: prefer Manual Dip Reading, fall back to Dip
+          const petrolVal = manualDipPetrolRaw ?? dipPetrolRaw;
+          if (petrolVal !== null && petrolVal !== "") {
+            const litres = parseFloat(parseNum(petrolVal));
+            if (!isNaN(litres) && litres > 0) {
+              await upsertDipReading({ readingDate: reportDate, fuelType: "petrol", dipLitres: litres, recordedBy: "Excel Import" });
+              dipsImported++;
+            }
+          }
+          // Diesel dip: prefer Manual Dip Reading (Diesel), fall back to Dip (Diesel)
+          const dieselVal = manualDipDieselRaw ?? dipDieselRaw;
+          if (dieselVal !== null && dieselVal !== "") {
+            const litres = parseFloat(parseNum(dieselVal));
+            if (!isNaN(litres) && litres > 0) {
+              await upsertDipReading({ readingDate: reportDate, fuelType: "diesel", dipLitres: litres, recordedBy: "Excel Import" });
+              dipsImported++;
+            }
+          }
+        } catch { /* skip */ }
+      }
+      if (dipsImported > 0) results[`Dip Readings (${sn})`] = dipsImported;
     }
 
     // ── 3. Expenses ────────────────────────────────────────────────────────────

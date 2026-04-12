@@ -611,3 +611,15 @@
 - [x] Inventory: 7-day dip reading history table (toggle with History button)
 - [x] Inventory: History table shows Petrol Dip, Petrol Variance, Diesel Dip, Diesel Variance per date
 - [x] Inventory: Variance note explains formula and historical limitation
+
+## Daily Stock Statement — Dip Reading Fix
+- [x] Backend: getDailyStockStatement — verified dip_readings JOIN returns dipReading and dipVariance per row for both fuel types
+- [x] Backend: Dip Var formula corrected to Closing Stock − Dip Reading (was Opening + PO Receipts − Dip)
+- [x] Backend: Excel import router updated to read Dip and Manual Dip Reading columns from Daily Stock Statement sheet
+- [x] Backend: importRouter now auto-imports dip readings when Excel file contains Daily Stock Statement sheet
+- [x] Frontend: DailyStockStatement — DipCell shows saved value (amber) or "Enter dip" (italic) per row, click to edit
+- [x] Frontend: DailyStockStatement — Dip Var column shows coloured VarianceBadge (green/red/blue) when dip reading exists
+- [x] Frontend: DailyStockStatement — saving a dip reading invalidates query and refetches immediately
+- [x] Frontend: DailyStockStatement — "No Dip Readings" banner now explains both manual entry and bulk Excel import options
+- [x] Frontend: DailyStockStatement — live variance preview while typing uses Closing Stock − typed value
+- [x] Inventory: Dip section confirmed to pull from same dip_readings table via getDipReadings procedure

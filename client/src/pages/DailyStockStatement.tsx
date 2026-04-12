@@ -16,8 +16,9 @@ const fmtL = (n: number | null | undefined) =>
 const fmtLShort = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-/** Dip Variance = (Opening + PO Receipts) − Dip Reading
- *  Positive = stock loss/shrinkage; Negative = stock gain */
+/** Dip Variance = Closing Stock − Dip Reading
+ *  Positive = system closing > dip (possible loss/evaporation)
+ *  Negative = dip > system closing (possible gain/meter error) */
 function VarianceBadge({ variance }: { variance: number | null }) {
   if (variance === null) return <span className="text-muted-foreground text-xs italic">No dip</span>;
   const abs = Math.abs(variance);
@@ -39,15 +40,13 @@ function DipCell({
   date,
   fuelType,
   currentDip,
-  openingStock,
-  poReceipts,
+  reportedClosing,
   onSaved,
 }: {
   date: string;
   fuelType: "petrol" | "diesel";
   currentDip: number | null;
-  openingStock: number;
-  poReceipts: number;
+  reportedClosing: number;
   onSaved: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -75,9 +74,9 @@ function DipCell({
     saveDip.mutate({ readingDate: date, fuelType, dipLitres: litres });
   }, [value, date, fuelType, saveDip]);
 
-  // Compute live preview variance while editing
+  // Compute live preview variance while editing: Closing Stock − Dip Reading
   const previewVariance = editing && value !== ""
-    ? (openingStock + poReceipts) - parseFloat(value)
+    ? reportedClosing - parseFloat(value)
     : null;
 
   if (editing) {
@@ -219,8 +218,8 @@ export default function DailyStockStatement() {
         <div>
           <span className="font-semibold text-foreground">SOP Formula: </span>
           Closing = Opening − Meter Sales + Receipts.
-          {" "}<span className="font-semibold text-amber-400">Dip Variance</span> = (Opening + Purchased Receipts) − Manual Dip Reading.
-          {" "}A <span className="text-red-400 font-semibold">positive variance</span> means stock loss/shrinkage; a <span className="text-blue-400 font-semibold">negative variance</span> means stock gain.
+          {" "}<span className="font-semibold text-amber-400">Dip Variance</span> = Closing Stock − Manual Dip Reading.
+          {" "}A <span className="text-red-400 font-semibold">positive variance</span> means system closing &gt; dip (possible loss/evaporation); a <span className="text-blue-400 font-semibold">negative variance</span> means dip &gt; system closing (possible meter error).
           {" "}Click any amber <span className="text-amber-400 font-semibold">Dip Reading</span> cell to enter or update a manual dip measurement.
         </div>
       </div>
@@ -348,8 +347,7 @@ export default function DailyStockStatement() {
                             date={row.date}
                             fuelType="petrol"
                             currentDip={row.petrol.dipReading}
-                            openingStock={row.petrol.openingStock}
-                            poReceipts={row.petrol.poReceipts}
+                            reportedClosing={row.petrol.reportedClosing}
                             onSaved={() => setRefreshKey(k => k + 1)}
                           />
                         </td>
@@ -368,8 +366,7 @@ export default function DailyStockStatement() {
                             date={row.date}
                             fuelType="diesel"
                             currentDip={row.diesel.dipReading}
-                            openingStock={row.diesel.openingStock}
-                            poReceipts={row.diesel.poReceipts}
+                            reportedClosing={row.diesel.reportedClosing}
                             onSaved={() => setRefreshKey(k => k + 1)}
                           />
                         </td>
@@ -410,11 +407,26 @@ export default function DailyStockStatement() {
       {!hasDips && (
         <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-muted-foreground">
           <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
-          <div>
-            <span className="font-semibold text-amber-400">No Dip Readings Entered Yet: </span>
-            Click any <span className="font-semibold text-amber-400">Dip Reading</span> cell in the table above to enter a manual dip measurement for that day.
-            The <span className="font-semibold text-foreground">Dip Variance</span> column will automatically calculate{" "}
-            <span className="font-semibold">(Opening + Purchased Receipts) − Dip Reading</span> to show stock loss or gain.
+          <div className="space-y-1">
+            <div>
+              <span className="font-semibold text-amber-400">No Dip Readings Entered Yet. </span>
+              You have two options:
+            </div>
+            <div>
+              <span className="font-semibold text-foreground">Option 1 — Manual entry:</span> Click any amber{" "}
+              <span className="font-semibold text-amber-400">Dip Reading</span> cell in the table above to enter a reading for that day.
+            </div>
+            <div>
+              <span className="font-semibold text-foreground">Option 2 — Bulk import from Excel:</span> Go to{" "}
+              <a href="/import" className="text-primary underline underline-offset-2 hover:text-primary/80">Data Import</a>{" "}
+              and re-upload the BEES Excel file. The importer will read the{" "}
+              <span className="font-semibold text-amber-400">Dip</span> and{" "}
+              <span className="font-semibold text-amber-400">Manual Dip Reading</span> columns from the{" "}
+              <span className="font-semibold">Daily Stock Statement</span> sheet and populate all historical dip readings automatically.
+            </div>
+            <div className="text-[10px] text-muted-foreground/70">
+              Dip Variance = Closing Stock − Manual Dip Reading. Positive = system closing &gt; dip (possible loss). Negative = dip &gt; closing (possible gain/meter error).
+            </div>
           </div>
         </div>
       )}

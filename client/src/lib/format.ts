@@ -26,6 +26,11 @@ export function fmtVol(n: number): string {
   return `${n.toFixed(0)}L`;
 }
 
+/** Full volume with Indian grouping and 2 decimals: 2,71,051.35 L */
+export function fmtVolFull(n: number): string {
+  return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(n) + " L";
+}
+
 /** Plain integer with Indian grouping: 1,00,000 */
 export function fmtInt(n: number): string {
   return new Intl.NumberFormat("en-IN").format(Math.round(n));

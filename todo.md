@@ -547,3 +547,15 @@
 - [x] Correct Diesel (HSD) currentStock to 13,146.20 L (confirmed by Kranthi from BEES register)
 - [x] Root cause: closingStockDiesel on 31 Mar 2026 was a data entry error in Excel (6,823.32 recorded vs correct 13,146.20 = opening 15,677.09 − sold 2,530.89)
 - [x] Fixed: both products.currentStock and daily_reports.closingStockDiesel for 31 Mar 2026 updated to 13,146.20 L
+
+## Stock Consistency Validation
+- [ ] Backend: tRPC procedure stockValidation.getInconsistencies — query daily_reports for rows where ABS(opening - sold - closing) > tolerance (5L)
+- [ ] Backend: returns list of flagged rows with date, fuel type, opening, sold, closing, expected closing, variance
+- [ ] Backend: stockValidation.fixInconsistency mutation — auto-correct closing stock to opening - sold for a given date
+- [ ] Frontend: Reconciliation page — "Stock Audit" tab showing all flagged inconsistencies with fix button
+- [ ] Frontend: Dashboard alert banner — show count of inconsistencies with link to Reconciliation > Stock Audit
+- [ ] Frontend: Reconciliation save — run validation after each save and show inline warning if inconsistency detected
+
+## Number Format Consistency — Sales & Nozzles KPI Cards
+- [x] Fix: Petrol Volume and Diesel Volume KPI cards now show full Indian-formatted volume as subtitle (e.g. 2,71,051.35 L) on hover
+- [x] All four KPI cards: Total Sales (₹12.10Cr / ₹12,10,18,929.01), Petrol Volume (271.1KL / 2,71,051.35 L), Diesel Volume (942.5KL / 9,42,537.70 L), Gross Profit (₹33.89L / ₹33,88,530.04)

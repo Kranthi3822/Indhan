@@ -1,21 +1,23 @@
 /**
  * StatCard — Reusable KPI card with:
- *   • Compact primary value  (e.g. ₹1.00Cr)
- *   • Full exact secondary   (e.g. ₹1,00,03,078.05)  — dims until hover
+ *   • Compact primary value  (e.g. ₹1.00Cr or 271.1KL)
+ *   • Full exact secondary   (e.g. ₹1,00,03,078.05 or 2,71,051.35 L)  — dims until hover
  *   • Optional trend badge
  *   • Optional icon
  */
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { fmtFull } from "@/lib/format";
+import { fmtFull, fmtVolFull } from "@/lib/format";
 
 interface StatCardProps {
-  /** Compact display value, e.g. "₹1.00Cr" or "493.8KL" */
+  /** Compact display value, e.g. "₹1.00Cr" or "271.1KL" */
   value: string;
-  /** Raw numeric value — used to render the full exact amount below */
+  /** Raw numeric value — used to render the full exact monetary amount below */
   rawValue?: number;
-  /** Whether rawValue is a monetary amount (adds ₹ formatting) */
+  /** Whether rawValue is a monetary amount (adds ₹ formatting). Default true. */
   isCurrency?: boolean;
+  /** Raw volume in litres — shows full Indian-formatted volume as subtitle (e.g. 2,71,051.35 L) */
+  rawVolume?: number;
   /** Card label, e.g. "Total Sales" */
   label: string;
   /** Sub-label, e.g. "Mar 2026" */
@@ -36,6 +38,7 @@ export function StatCard({
   value,
   rawValue,
   isCurrency = true,
+  rawVolume,
   label,
   sub,
   icon: Icon,
@@ -45,7 +48,11 @@ export function StatCard({
   color,
 }: StatCardProps) {
   const fullAmt =
-    rawValue !== undefined && isCurrency ? fmtFull(rawValue) : null;
+    rawValue !== undefined && isCurrency
+      ? fmtFull(rawValue)
+      : rawVolume !== undefined
+      ? fmtVolFull(rawVolume)
+      : null;
 
   const iconStyle = color
     ? { background: `${color}20`, border: `1px solid ${color}40` }

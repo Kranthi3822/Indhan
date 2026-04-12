@@ -238,6 +238,7 @@ export default function Sales() {
           label="Petrol Volume"
           value={fmtVol(summary?.petrolQty ?? 0)}
           isCurrency={false}
+          rawVolume={summary?.petrolQty ?? 0}
           sub="Litres dispensed"
           color="oklch(0.72 0.18 145)"
         />
@@ -246,6 +247,7 @@ export default function Sales() {
           label="Diesel Volume"
           value={fmtVol(summary?.dieselQty ?? 0)}
           isCurrency={false}
+          rawVolume={summary?.dieselQty ?? 0}
           sub="Litres dispensed"
           color="oklch(0.65 0.18 250)"
         />

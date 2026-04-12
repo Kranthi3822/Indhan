@@ -56,12 +56,17 @@ importRouter.post("/api/import/excel", upload.single("file"), async (req, res) =
       /receivable|customer|credit account/i.test(n)
     );
     const customerMap: Record<string, number> = {};
+    // Pre-populate customerMap from existing DB records to prevent duplicates on re-import
+    const existingCustomers = await db.select({ id: customers.id, name: customers.name }).from(customers);
+    for (const ec of existingCustomers) customerMap[ec.name] = ec.id;
     for (const sn of customerSheets) {
       const rows = sheetToRows(wb, sn);
       let imported = 0;
       for (const row of rows) {
         const name = String(row["Customer Name"] ?? row["Name"] ?? row["CUSTOMER"] ?? "").trim();
         if (!name || name.toLowerCase() === "total" || name.toLowerCase() === "name") continue;
+        // If customer already exists, reuse existing ID — never create duplicates
+        if (customerMap[name]) { imported++; continue; }
         try {
           const [result] = await db.insert(customers).values({
             name,
@@ -71,7 +76,7 @@ importRouter.post("/api/import/excel", upload.single("file"), async (req, res) =
           const insertId = (result as any).insertId;
           if (insertId) customerMap[name] = insertId;
           imported++;
-        } catch { /* skip duplicates */ }
+        } catch { /* skip */ }
       }
       results[`Customers (${sn})`] = imported;
     }

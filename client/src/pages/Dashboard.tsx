@@ -659,7 +659,7 @@ export default function Dashboard() {
                 <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-2 flex items-center gap-1">
                   <Droplets className="w-3 h-3" /> Fuel
                 </p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {allProducts.filter((p: any) => p.category === 'fuel').map((product: any) => (
                     <DashStockCard key={product.id} product={product} />
                   ))}

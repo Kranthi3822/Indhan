@@ -493,6 +493,20 @@
 - [x] Update scrollbar colours to match amber theme
 
 ## Inventory & Dashboard Feature Sprint
-- [ ] Dashboard: real-time low-stock alert banner at top (shows products below reorderLevel with name, current qty, min qty, link to Inventory)
-- [ ] Inventory: search bar to filter products by name in real-time
-- [ ] Inventory: grid/list view toggle (grid = current gauge cards, list = compact table rows)
+- [x] Dashboard: real-time low-stock alert banner at top (shows products below reorderLevel with name, current qty, min qty, link to Inventory)
+- [x] Inventory: search bar to filter products by name in real-time
+- [x] Inventory: grid/list view toggle (grid = current gauge cards, list = compact table rows)
+
+## PWA (Progressive Web App)
+- [x] Install vite-plugin-pwa and configure in vite.config.ts
+- [x] Create web app manifest (name: Indhan, short_name: Indhan, display: standalone, theme_color: #1a1208)
+- [x] Generate PWA icons: icon-192.png, icon-512.png, icon-512-maskable.png, apple-touch-icon.png, favicon-32.png
+- [x] Add apple-touch-icon and iOS meta tags in index.html (apple-mobile-web-app-capable, status-bar-style, title)
+- [x] Configure service worker with Workbox (cache-first for assets, NetworkFirst for /api/trpc/*)
+- [x] Sidebar uses shadcn SidebarProvider with mobile drawer + hamburger trigger (already responsive)
+- [x] Dashboard KPI grid: grid-cols-2 on mobile, lg:grid-cols-5 on desktop
+- [x] Dashboard stock widget: grid-cols-1 sm:grid-cols-2 for fuel cards on mobile
+- [x] Main content padding: p-3 on mobile, p-6 on desktop
+- [x] Header height: h-14 on mobile, h-16 on desktop
+- [ ] Publish app to production URL then test install prompt on Android Chrome
+- [ ] Verify iOS "Add to Home Screen" works on published URL

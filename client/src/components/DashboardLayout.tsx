@@ -281,7 +281,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
       </div>
 
       <SidebarInset className="flex flex-col min-h-screen">
-        <header className="h-16 border-b border-border/50 flex items-center justify-between px-6 shrink-0 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+        <header className="h-14 md:h-16 border-b border-border/50 flex items-center justify-between px-3 md:px-6 shrink-0 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
           <div className="flex items-center gap-3">
             {isMobile && <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-secondary/60" />}
             <div>
@@ -301,7 +301,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
             </button>
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-3 md:p-6 overflow-auto">{children}</main>
       </SidebarInset>
       <SathiAgent />
     </>

@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,7 +151,42 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const pwaPlugin = VitePWA({
+  registerType: "autoUpdate",
+  includeAssets: ["favicon.ico", "apple-touch-icon.png", "icons/*.png"],
+  manifest: {
+    name: "Indhan — Fuel Station OS",
+    short_name: "Indhan",
+    description: "BEES Fuel Station Operations Management System",
+    theme_color: "#1a1208",
+    background_color: "#1a1208",
+    display: "standalone",
+    orientation: "portrait-primary",
+    scope: "/",
+    start_url: "/",
+    icons: [
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { src: "/icons/icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
+  },
+  workbox: {
+    globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+    runtimeCaching: [
+      {
+        urlPattern: /^\/api\/trpc\/.*/i,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "trpc-api-cache",
+          expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+        },
+      },
+    ],
+  },
+  devOptions: { enabled: false },
+});
+
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), pwaPlugin];
 
 export default defineConfig({
   plugins,

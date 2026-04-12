@@ -152,6 +152,12 @@ export async function getDailyTrend(days: number) {
     netProfit: dailyReports.netProfit,
     totalExpenses: dailyReports.totalExpenses,
     cashBalance: dailyReports.cashBalance,
+    petrolSalesQty: dailyReports.petrolSalesQty,
+    dieselSalesQty: dailyReports.dieselSalesQty,
+    cashCollected: dailyReports.cashCollected,
+    cardCollected: dailyReports.cardCollected,
+    onlineCollected: dailyReports.onlineCollected,
+    creditSales: dailyReports.creditSales,
   }).from(dailyReports).orderBy(desc(dailyReports.reportDate)).limit(days);
   // Normalize reportDate: TiDB may return full ISO timestamps for varchar date fields
   return rows.map(r => ({
@@ -170,6 +176,12 @@ export async function getDailyTrendByRange(startDate: string, endDate: string) {
     netProfit: dailyReports.netProfit,
     totalExpenses: dailyReports.totalExpenses,
     cashBalance: dailyReports.cashBalance,
+    petrolSalesQty: dailyReports.petrolSalesQty,
+    dieselSalesQty: dailyReports.dieselSalesQty,
+    cashCollected: dailyReports.cashCollected,
+    cardCollected: dailyReports.cardCollected,
+    onlineCollected: dailyReports.onlineCollected,
+    creditSales: dailyReports.creditSales,
   }).from(dailyReports).where(
     sql`${dailyReports.reportDate} >= ${startDate} AND ${dailyReports.reportDate} <= ${endDate}`
   ).orderBy(dailyReports.reportDate);
@@ -287,6 +299,7 @@ export async function getPurchaseOrders(limit = 50) {
       id: purchaseOrders.id,
       productId: purchaseOrders.productId,
       productName: products.name,
+      productUnit: products.unit,
       supplier: purchaseOrders.supplier,
       orderDate: purchaseOrders.orderDate,
       quantityOrdered: purchaseOrders.quantityOrdered,

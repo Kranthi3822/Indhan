@@ -214,3 +214,30 @@
 - [x] In-app notification generation for overdue maintenance (past due date)
 - [x] Owner notification via notifyOwner for critical overdue assets
 - [x] Alerts tab in Assets page showing all active notifications with dismiss/mark-read actions
+
+## Phase 3 — Biometric Attendance System — COMPLETE
+- [x] DB schema: employee_auth, face_profiles, attendance_check_in_slots, attendance_check_ins, payroll_requests tables
+- [x] Real employee records: Mahesh (Incharge), Ashok, Kiran, Parandhamulu, Anjaiah (from expense data)
+- [x] Backend: 6-digit PIN set/verify per employee (bcrypt hashed)
+- [x] Backend: face profile enrolment (store face descriptors from face-api.js)
+- [x] Backend: randomised check-in slot generation (6AM–10PM only, 1 slot/hour at random minute)
+- [x] Backend: check-in verification (face match + geo-fence 50m from station)
+- [x] Backend: attendance scoring (verified/total slots per day, 90% threshold for pay eligibility)
+- [x] Backend: payroll request (weekly/monthly, calculates net pay based on attendance score)
+- [x] Backend: admin payroll review (approve/reject/mark-paid with payment mode)
+- [x] Backend: getEmployeesWithAuth — shows PIN set and face enrolled status
+- [x] Backend: getTodayOverview — real-time check-in status per employee
+- [x] Staff Portal (/staff): PIN login, face enrolment (5-sample capture), check-in verification, attendance score, payroll request
+- [x] Admin UI (/attendance): today overview, monthly scores, payroll approval, PIN setup
+- [x] Sidebar: "Biometric Attendance" added under People group with ScanFace icon
+- [x] 184 tests passing after all changes
+
+## Phase 4 — Audit Fixes (Critical & High Priority)
+
+- [ ] Fix P&L sidebar route: /pl-reports → /reports
+- [ ] Populate daily_reports petrolVolume and dieselVolume from sales_transactions
+- [ ] Populate daily_reports cashSales/cardSales/creditSales/onlineSales from sales_transactions
+- [ ] Fix active staff count: deactivate stale 6th employee record
+- [ ] Set realistic min stock levels (Diesel 5000L, Petrol 3000L, lubricants 20L each)
+- [ ] Fix PO units label: "units" → "litres" for fuel products
+- [ ] Fix bank reconciliation: Reconcile button updates isReconciled, Pending count reflects reality

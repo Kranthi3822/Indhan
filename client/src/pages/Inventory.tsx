@@ -275,7 +275,7 @@ export default function Inventory() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate">{po.productName ?? "Product"}</p>
-                      <p className="text-[10px] text-muted-foreground">{po.orderDate} · {po.quantityOrdered} units</p>
+                      <p className="text-[10px] text-muted-foreground">{po.orderDate} · {Number(po.quantityOrdered).toLocaleString('en-IN')} {po.productUnit ?? 'units'}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-bold tabular-nums">{fmt(Number(po.totalAmount ?? 0))}</p>

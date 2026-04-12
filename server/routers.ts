@@ -20,6 +20,7 @@ import { invokeLLM } from "./_core/llm";
 import { hrRouter, assetsRouter } from "./routers-hr";
 import { attendanceRouter } from "./routers/attendanceRouter";
 import { nozzleRouter } from "./routers/nozzleRouter";
+import { fuelIntelligenceRouter } from "./routers/fuelIntelligenceRouter";
 
 // ─── Shared date range input ──────────────────────────────────────────────────
 // Enforce YYYY-MM-DD format to prevent SQL injection via date parameters
@@ -421,6 +422,7 @@ export const appRouter = router({
   assets: assetsRouter,
   attendance: attendanceRouter,
   nozzle: nozzleRouter,
+  fuelIntelligence: fuelIntelligenceRouter,
 });
 
 export type AppRouter = typeof appRouter;

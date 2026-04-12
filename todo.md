@@ -252,3 +252,19 @@
 - [x] Upgrade Reconciliation page — nozzle data banner, Pre-fill Sales button, drill-down per session
 - [x] Add Nozzle Entry to App.tsx routing and sidebar nav (Operations group)
 - [x] Write vitest tests for nozzle module (197 total tests passing)
+
+## Dynamic Fuel Intelligence Module — COMPLETE
+- [x] DB schema: dip_readings table (date, fuel_type, tank_id, dip_litres, reading_time, recorded_by)
+- [x] DB schema: fuel_config table (fuel_type unique, retail_price, latest_cost_price, evaporation_rate_pct, tank_capacity_litres)
+- [x] Migration applied and seeded: petrol (₹103.41 retail / ₹99.46 cost / 0.1% evap), diesel (₹89.14 / ₹86.65 / 0.08%)
+- [x] db-fuel-intelligence.ts: getFuelIntelligence() — WACP from purchase orders, effective margin, dip stock value, evaporation
+- [x] db-fuel-intelligence.ts: getDipReadings(), upsertDipReading(), getFuelConfigs(), updateFuelConfig()
+- [x] fuelIntelligenceRouter.ts: getIntelligence, getDipReadings, saveDipReading, getFuelConfig, updateFuelConfig procedures
+- [x] Dashboard: replaced fixed "Fuel Margins (Fixed)" section with dynamic "Fuel Intelligence" card
+- [x] Dashboard: shows Retail Price / WACP Cost / Margin % per fuel type
+- [x] Dashboard: shows gross margin vs effective margin (after evaporation) side by side
+- [x] Dashboard: stock from dip readings with tank fill % progress bar
+- [x] Dashboard: evaporation litres + value displayed per fuel type
+- [x] Dashboard: "Dip Readings Active" vs "Estimated Stock" badge based on data quality
+- [x] Dashboard: amber warning banner when no dip readings recorded
+- [x] 218 vitest tests passing (21 new fuel intelligence tests)

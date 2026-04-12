@@ -626,3 +626,38 @@ export const dayReconciliations = mysqlTable("day_reconciliations", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type DayReconciliation = typeof dayReconciliations.$inferSelect;
+
+// ─── Dip Readings ─────────────────────────────────────────────────────────────
+// Physical tank dip measurements (actual stock in litres) — taken daily by staff.
+// This is the ground truth for stock, not meter readings (which measure dispensed volume).
+export const dipReadings = mysqlTable("dip_readings", {
+  id: int("id").autoincrement().primaryKey(),
+  readingDate: varchar("reading_date", { length: 10 }).notNull(),  // YYYY-MM-DD
+  fuelType: mysqlEnum("fuel_type", ["petrol", "diesel"]).notNull(),
+  tankId: varchar("tank_id", { length: 20 }).notNull().default("T1"), // T1, T2 etc.
+  dipLitres: decimal("dip_litres", { precision: 12, scale: 3 }).notNull(), // actual litres from dip stick
+  readingTime: varchar("reading_time", { length: 8 }).default("08:00"),   // HH:MM
+  recordedBy: varchar("recorded_by", { length: 100 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DipReading = typeof dipReadings.$inferSelect;
+export type InsertDipReading = typeof dipReadings.$inferInsert;
+
+// ─── Fuel Configuration ───────────────────────────────────────────────────────
+// Per-fuel-type configuration: current retail price, cost price, evaporation rate.
+// Updated by admin when IOC revises prices or when a new purchase batch arrives.
+export const fuelConfig = mysqlTable("fuel_config", {
+  id: int("id").autoincrement().primaryKey(),
+  fuelType: mysqlEnum("fuel_type", ["petrol", "diesel", "lubricant"]).notNull().unique(),
+  retailPrice: decimal("retail_price", { precision: 10, scale: 2 }).notNull(),   // ₹/L selling price
+  latestCostPrice: decimal("latest_cost_price", { precision: 10, scale: 2 }).notNull(), // ₹/L last purchase cost
+  evaporationRatePct: decimal("evaporation_rate_pct", { precision: 6, scale: 4 }).default("0.1000"), // % per day (0.1% default)
+  tankCapacityLitres: decimal("tank_capacity_litres", { precision: 10, scale: 2 }).default("20000.00"),
+  updatedBy: varchar("updated_by", { length: 100 }),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FuelConfig = typeof fuelConfig.$inferSelect;
+export type InsertFuelConfig = typeof fuelConfig.$inferInsert;

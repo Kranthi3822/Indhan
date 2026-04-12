@@ -9,6 +9,7 @@ import {
 import {
   TrendingUp, Fuel, IndianRupee,
   CreditCard, Wallet, Package, Users,
+  Droplets, FlaskConical, AlertTriangle, Settings2,
 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -89,6 +90,7 @@ export default function Dashboard() {
   const { data: lowStock } = trpc.inventory.lowStock.useQuery();
   const { data: topCustomers } = trpc.customers.topByOutstanding.useQuery();
   const { data: expenseBreakdown } = trpc.dashboard.expenseBreakdown.useQuery({ startDate, endDate });
+  const { data: fuelIntel } = trpc.fuelIntelligence.getIntelligence.useQuery({ startDate, endDate });
 
   const expensePieData = useMemo(() => {
     if (!expenseBreakdown || expenseBreakdown.length === 0) return [];
@@ -230,25 +232,121 @@ export default function Dashboard() {
         <StatCard label="Outstanding" value={isLoading ? "—" : fmtCompact(totalReceivables)} rawValue={isLoading ? undefined : totalReceivables} sub={`Collection: ${collectionRate}%`} icon={CreditCard} trend={totalReceivables > 500000 ? "down" : "up"} trendVal={`${collectionRate}%`} colorClass={totalReceivables > 500000 ? "text-red-400 bg-red-500/10 border-red-500/20" : "text-green-400 bg-green-500/10 border-green-500/20"} />
       </div>
 
+      {/* ─── Dynamic Fuel Intelligence ─────────────────────────────────────── */}
       <Card className="bg-card border-border/50">
         <CardHeader className="pb-3 pt-4 px-5">
-          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Fuel className="w-4 h-4 text-primary" /> Fuel Margins (Fixed)
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Fuel className="w-4 h-4 text-primary" /> Fuel Intelligence
+              {fuelIntel?.dataQuality.hasDipReadings
+                ? <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-500/15 text-green-400 border border-green-500/20">Dip Readings Active</span>
+                : <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">Estimated Stock</span>
+              }
+            </CardTitle>
+            <a href="/nozzle-entry" className="text-[11px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+              <Settings2 className="w-3 h-3" /> Update Dip
+            </a>
+          </div>
         </CardHeader>
-        <CardContent className="px-5 pb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="flex items-center justify-between p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-amber-400">
-            <div className="flex items-center gap-2"><Fuel className="w-4 h-4" /><span className="text-sm font-semibold">Petrol</span></div>
-            <span className="text-sm font-bold tabular-nums">₹3.95/L</span>
+        <CardContent className="px-5 pb-4 space-y-3">
+          {(["petrol", "diesel"] as const).map((ft) => {
+            const d = ft === "petrol" ? fuelIntel?.petrol : fuelIntel?.diesel;
+            const color = ft === "petrol" ? "amber" : "blue";
+            const grossM = d?.grossMarginPerL ?? (ft === "petrol" ? 3.95 : 2.49);
+            const effM = d?.effectiveMarginPerL ?? grossM;
+            const evapL = d?.evaporationLitres ?? 0;
+            const evapV = d?.evaporationValue ?? 0;
+            const stockL = d?.latestDipLitres ?? null;
+            const stockV = d?.stockValue ?? 0;
+            const stockPct = d?.stockPct ?? 0;
+            const dipDate = d?.latestDipDate ?? null;
+            const retailP = d?.retailPrice ?? (ft === "petrol" ? 103.41 : 89.14);
+            const costP = d?.wacpCostPrice ?? (ft === "petrol" ? 99.46 : 86.65);
+            const marginPct = d?.grossMarginPct ?? 0;
+            return (
+              <div key={ft} className={`p-3 rounded-lg border ${
+                color === "amber" ? "border-amber-500/20 bg-amber-500/5" : "border-blue-500/20 bg-blue-500/5"
+              }`}>
+                {/* Header row */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Fuel className={`w-4 h-4 ${color === "amber" ? "text-amber-400" : "text-blue-400"}`} />
+                    <span className={`text-sm font-semibold capitalize ${color === "amber" ? "text-amber-400" : "text-blue-400"}`}>{ft}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {Math.abs(effM - grossM) > 0.01 && (
+                      <div className="text-right">
+                        <p className="text-xs tabular-nums text-muted-foreground line-through">₹{grossM.toFixed(2)}/L</p>
+                        <p className="text-[10px] text-muted-foreground">Gross margin</p>
+                      </div>
+                    )}
+                    <div className="text-right">
+                      <p className={`text-base font-bold tabular-nums ${color === "amber" ? "text-amber-400" : "text-blue-400"}`}>₹{effM.toFixed(2)}/L</p>
+                      <p className="text-[10px] text-muted-foreground">Eff. margin</p>
+                    </div>
+                  </div>
+                </div>
+                {/* Price breakdown */}
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="text-center p-1.5 rounded bg-card/50">
+                    <p className="text-[10px] text-muted-foreground">Retail Price</p>
+                    <p className="text-xs font-semibold tabular-nums">₹{retailP.toFixed(2)}/L</p>
+                  </div>
+                  <div className="text-center p-1.5 rounded bg-card/50">
+                    <p className="text-[10px] text-muted-foreground">Cost (WACP)</p>
+                    <p className="text-xs font-semibold tabular-nums">₹{costP.toFixed(2)}/L</p>
+                  </div>
+                  <div className="text-center p-1.5 rounded bg-card/50">
+                    <p className="text-[10px] text-muted-foreground">Margin %</p>
+                    <p className={`text-xs font-semibold tabular-nums ${color === "amber" ? "text-amber-400" : "text-blue-400"}`}>{marginPct.toFixed(2)}%</p>
+                  </div>
+                </div>
+                {/* Stock & Evaporation */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-2 p-1.5 rounded bg-card/50">
+                    <Droplets className="w-3 h-3 text-cyan-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground truncate">Stock{dipDate ? ` (${dipDate})` : " (est.)"}</p>
+                      {stockL !== null
+                        ? <p className="text-xs font-semibold tabular-nums">{stockL.toFixed(0)}L <span className="text-muted-foreground font-normal">({fmtCompact(stockV)})</span></p>
+                        : <p className="text-xs text-muted-foreground">No dip reading</p>
+                      }
+                      {stockL !== null && (
+                        <div className="mt-0.5 h-1 rounded-full bg-muted/30 overflow-hidden">
+                          <div className={`h-full rounded-full ${color === "amber" ? "bg-amber-400/60" : "bg-blue-400/60"}`} style={{ width: `${Math.min(100, stockPct)}%` }} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-1.5 rounded bg-card/50">
+                    <FlaskConical className="w-3 h-3 text-orange-400 shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Evaporation Loss</p>
+                      {evapL > 0.01
+                        ? <p className="text-xs font-semibold tabular-nums text-orange-400">{evapL.toFixed(1)}L <span className="text-muted-foreground font-normal">({fmtCompact(evapV)})</span></p>
+                        : <p className="text-xs text-muted-foreground">— (no data yet)</p>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {/* Lubricants */}
+          <div className="flex items-center justify-between p-3 rounded-lg border border-green-500/20 bg-green-500/5">
+            <div className="flex items-center gap-2">
+              <Fuel className="w-4 h-4 text-green-400" />
+              <span className="text-sm font-semibold text-green-400">Lubricants</span>
+            </div>
+            <span className="text-xs text-muted-foreground">Variable margin — see P&L Reports</span>
           </div>
-          <div className="flex items-center justify-between p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 text-blue-400">
-            <div className="flex items-center gap-2"><Fuel className="w-4 h-4" /><span className="text-sm font-semibold">Diesel</span></div>
-            <span className="text-sm font-bold tabular-nums">₹2.49/L</span>
-          </div>
-          <div className="flex items-center justify-between p-3 rounded-lg border border-green-500/20 bg-green-500/5 text-green-400">
-            <div className="flex items-center gap-2"><Fuel className="w-4 h-4" /><span className="text-sm font-semibold">Lubricants</span></div>
-            <span className="text-sm font-bold tabular-nums">Variable</span>
-          </div>
+          {/* Data quality notice */}
+          {!fuelIntel?.dataQuality.hasDipReadings && (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-amber-500/20 bg-amber-500/5">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-amber-400/80">No dip readings recorded for this period. Stock values are estimated. Enter daily dip readings via <a href="/nozzle-entry" className="underline hover:text-amber-300">Nozzle Entry</a> for accurate stock valuation.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

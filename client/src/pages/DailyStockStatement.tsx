@@ -3,11 +3,13 @@ import { useState, useMemo, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Droplets, TrendingDown, TrendingUp, AlertTriangle,
-  CheckCircle, Info, FlaskConical, Save, Pencil, Upload, Loader2,
+  CheckCircle, Info, FlaskConical, Save, Pencil, Upload, Loader2, Plus,
 } from "lucide-react";
 
 const fmtL = (n: number | null | undefined) =>
@@ -154,6 +156,178 @@ function DipCell({
   );
 }
 
+/** Dialog for adding / editing dip readings for a specific date (both fuels at once) */
+function AddDipDialog({
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(today);
+  const [petrolStick, setPetrolStick] = useState("");
+  const [petrolLitres, setPetrolLitres] = useState("");
+  const [dieselStick, setDieselStick] = useState("");
+  const [dieselLitres, setDieselLitres] = useState("");
+  const utils = trpc.useUtils();
+
+  const saveDip = trpc.fuelIntelligence.saveDipReading.useMutation();
+
+  const handleSave = useCallback(async () => {
+    const hasPetrol = petrolLitres.trim() !== "";
+    const hasDiesel = dieselLitres.trim() !== "";
+    if (!hasPetrol && !hasDiesel) {
+      toast.error("Enter at least one dip reading (Petrol or Diesel).");
+      return;
+    }
+    if (!date) { toast.error("Select a date."); return; }
+
+    const saves: Promise<any>[] = [];
+
+    if (hasPetrol) {
+      const litres = parseFloat(petrolLitres);
+      if (isNaN(litres) || litres < 0) { toast.error("Invalid Petrol litres value."); return; }
+      const stick = petrolStick !== "" ? parseFloat(petrolStick) : null;
+      saves.push(saveDip.mutateAsync({
+        readingDate: date,
+        fuelType: "petrol",
+        dipLitres: litres,
+        dipStickReading: stick && !isNaN(stick) ? stick : null,
+      }));
+    }
+
+    if (hasDiesel) {
+      const litres = parseFloat(dieselLitres);
+      if (isNaN(litres) || litres < 0) { toast.error("Invalid Diesel litres value."); return; }
+      const stick = dieselStick !== "" ? parseFloat(dieselStick) : null;
+      saves.push(saveDip.mutateAsync({
+        readingDate: date,
+        fuelType: "diesel",
+        dipLitres: litres,
+        dipStickReading: stick && !isNaN(stick) ? stick : null,
+      }));
+    }
+
+    try {
+      await Promise.all(saves);
+      toast.success(`Dip readings saved for ${date}`);
+      utils.inventory.dailyStockStatement.invalidate();
+      onSaved();
+      onOpenChange(false);
+      // Reset form
+      setDate(today);
+      setPetrolStick(""); setPetrolLitres("");
+      setDieselStick(""); setDieselLitres("");
+    } catch (err: any) {
+      toast.error(`Save failed: ${err.message}`);
+    }
+  }, [date, petrolStick, petrolLitres, dieselStick, dieselLitres, saveDip, utils, onSaved, onOpenChange, today]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-border/50 max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FlaskConical className="w-4 h-4 text-amber-400" />
+            Add / Update Dip Reading
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-5 pt-2">
+          {/* Date */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Date</Label>
+            <Input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="bg-secondary border-border/50 h-8 text-sm"
+              min="2025-04-01"
+              max="2026-03-31"
+            />
+          </div>
+
+          {/* Petrol section */}
+          <div className="space-y-2 p-3 rounded-lg border border-teal-500/20 bg-teal-500/5">
+            <div className="flex items-center gap-2 mb-1">
+              <Droplets className="w-3.5 h-3.5 text-teal-400" />
+              <span className="text-xs font-semibold text-teal-400">Petrol (MS)</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[10px] text-muted-foreground">Dip Stick (unitless)</Label>
+                <Input
+                  type="number"
+                  value={petrolStick}
+                  onChange={e => setPetrolStick(e.target.value)}
+                  placeholder="e.g. 76.0"
+                  className="bg-secondary border-border/50 h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] text-muted-foreground">Manual Dip Reading (Litres)</Label>
+                <Input
+                  type="number"
+                  value={petrolLitres}
+                  onChange={e => setPetrolLitres(e.target.value)}
+                  placeholder="e.g. 7059.77"
+                  className="bg-secondary border-amber-500/30 h-8 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Diesel section */}
+          <div className="space-y-2 p-3 rounded-lg border border-blue-500/20 bg-blue-500/5">
+            <div className="flex items-center gap-2 mb-1">
+              <Droplets className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-xs font-semibold text-blue-400">Diesel (HSD)</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[10px] text-muted-foreground">Dip Stick (unitless)</Label>
+                <Input
+                  type="number"
+                  value={dieselStick}
+                  onChange={e => setDieselStick(e.target.value)}
+                  placeholder="e.g. 82.5"
+                  className="bg-secondary border-border/50 h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] text-muted-foreground">Manual Dip Reading (Litres)</Label>
+                <Input
+                  type="number"
+                  value={dieselLitres}
+                  onChange={e => setDieselLitres(e.target.value)}
+                  placeholder="e.g. 13146.20"
+                  className="bg-secondary border-amber-500/30 h-8 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-muted-foreground px-1">
+            <span className="font-semibold text-amber-400">Dip Variance</span> = Closing Stock − Manual Dip Reading.
+            Leave a fuel section blank to skip it.
+          </div>
+
+          <Button
+            className="w-full h-9 gap-2"
+            onClick={handleSave}
+            disabled={saveDip.isPending}
+          >
+            {saveDip.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saveDip.isPending ? "Saving..." : "Save Dip Readings"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function DailyStockStatement() {
   const [mode, setMode] = useState<"preset" | "custom">("preset");
   const [preset, setPreset] = useState<"7" | "14" | "30">("14");
@@ -161,6 +335,7 @@ export default function DailyStockStatement() {
   const [toDate, setToDate] = useState("2026-03-31");
   const [applied, setApplied] = useState({ fromDate: undefined as string | undefined, toDate: undefined as string | undefined, days: 14 });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [addDipOpen, setAddDipOpen] = useState(false);
 
   const { data: rows, isLoading } = trpc.inventory.dailyStockStatement.useQuery(applied);
 
@@ -230,8 +405,15 @@ export default function DailyStockStatement() {
 
   return (
     <div className="space-y-5">
+      {/* Add Dip Reading Dialog */}
+      <AddDipDialog
+        open={addDipOpen}
+        onOpenChange={setAddDipOpen}
+        onSaved={() => setRefreshKey(k => k + 1)}
+      />
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3 justify-between">
         <div>
           <h2 className="text-lg font-bold">Daily Stock Statement</h2>
           <p className="text-xs text-muted-foreground">
@@ -239,6 +421,15 @@ export default function DailyStockStatement() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {/* Add Dip Reading button — prominent, always visible */}
+          <Button
+            size="sm"
+            className="h-8 text-xs gap-1.5 bg-amber-500 hover:bg-amber-600 text-black font-semibold"
+            onClick={() => setAddDipOpen(true)}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add Dip Reading
+          </Button>
           {(["7", "14", "30"] as const).map(d => (
             <Button
               key={d}
@@ -343,6 +534,14 @@ export default function DailyStockStatement() {
             <FlaskConical className="w-4 h-4 text-primary" />
             Daily Stock Register
             {rows && <Badge variant="outline" className="text-[10px] ml-auto">{rows.length} days</Badge>}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 ml-2"
+              onClick={() => setAddDipOpen(true)}
+            >
+              <Plus className="w-3 h-3" /> Dip Entry
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-4">
@@ -466,7 +665,7 @@ export default function DailyStockStatement() {
         </CardContent>
       </Card>
 
-      {/* Dip reading note */}
+      {/* Dip reading note — only shown when no dips exist for the current view */}
       {!hasDips && (
         <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-muted-foreground">
           <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
@@ -476,8 +675,17 @@ export default function DailyStockStatement() {
               You have two options:
             </div>
             <div>
-              <span className="font-semibold text-foreground">Option 1 — Manual entry:</span> Click any amber{" "}
-              <span className="font-semibold text-amber-400">Dip Reading</span> cell in the table above to enter a reading for that day.
+              <span className="font-semibold text-foreground">Option 1 — Manual entry:</span> Click the{" "}
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 text-[10px] gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 inline-flex px-2 py-0"
+                onClick={() => setAddDipOpen(true)}
+              >
+                <Plus className="w-2.5 h-2.5" /> Add Dip Reading
+              </Button>
+              {" "}button above, or click any amber{" "}
+              <span className="font-semibold text-amber-400">Dip Reading</span> cell in the table.
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
               <span className="font-semibold text-foreground">Option 2 — Bulk import from Excel:</span>

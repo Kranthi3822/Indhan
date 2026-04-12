@@ -666,3 +666,8 @@
 - [x] Sample verified: 31-Mar-2026 Petrol = 7059.77 L (stick 76.0), Diesel = 8853.77 L (stick 90.0)
 - [x] Backend dipVariance formula: reportedClosing − dipLitres (Closing Stock − Manual Dip Reading)
 - [x] Frontend DipCell preview formula: reportedClosing − parseFloat(litresVal) ✓
+
+## Dip Reading UI Consolidation (Apr 13 - Round 2)
+- [ ] Inventory: Remove DIP READINGS & VARIANCE section entirely (cards, state, hooks, imports)
+- [ ] Daily Stock Register: Add "Add Dip Reading" button in page header for manual date-based entry
+- [ ] Daily Stock Register: Manual entry dialog allows selecting date + entering Petrol and Diesel dip values

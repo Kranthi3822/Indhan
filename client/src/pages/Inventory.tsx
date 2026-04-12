@@ -14,9 +14,6 @@ import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
-const fmtL = (n: number) =>
-  new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(n) + " L";
-
 
 // Circular gauge SVG component
 function CircleGauge({ pct, color, size = 80 }: { pct: number; color: string; size?: number }) {

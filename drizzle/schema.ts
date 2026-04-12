@@ -638,7 +638,8 @@ export const dipReadings = mysqlTable("dip_readings", {
   readingDate: varchar("reading_date", { length: 10 }).notNull(),  // YYYY-MM-DD
   fuelType: mysqlEnum("fuel_type", ["petrol", "diesel"]).notNull(),
   tankId: varchar("tank_id", { length: 20 }).notNull().default("T1"), // T1, T2 etc.
-  dipLitres: decimal("dip_litres", { precision: 12, scale: 3 }).notNull(), // actual litres from dip stick
+  dipLitres: decimal("dip_litres", { precision: 12, scale: 3 }).notNull(), // actual litres from dip stick (Manual Dip Reading column)
+  dipStickReading: decimal("dip_stick_reading", { precision: 10, scale: 3 }), // raw dip stick number (Dip column, unitless)
   readingTime: varchar("reading_time", { length: 8 }).default("08:00"),   // HH:MM
   recordedBy: varchar("recorded_by", { length: 100 }),
   notes: text("notes"),

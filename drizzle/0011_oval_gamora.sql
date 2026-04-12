@@ -1,0 +1,1 @@
+ALTER TABLE `dip_readings` ADD `dip_stick_reading` decimal(10,3);

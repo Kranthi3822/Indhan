@@ -122,42 +122,54 @@ importRouter.post("/api/import/excel", upload.single("file"), async (req, res) =
       results[`Daily Reports (${sn})`] = imported;
     }
 
-    // ── 2b. Dip Readings — from "Daily Stock Statement" sheet (has Dip + Manual Dip Reading columns)
+    // ── 2b. Dip Readings — from "Daily Stock Statement" sheet
+    // Excel layout: Row 1 empty, Row 2 = merged "MS - Petrol" header, Row 3 = column headers, Row 4+ = data
+    // Petrol: Col E = "Dip" (raw stick number), Col F = "Manual Dip Reading" (litres)
+    // Diesel: Col O = "Dip", Col P = "Manual Dip Reading" (xlsx renames duplicates as "Dip_1", "Manual Dip Reading_1")
     const dipSheets = wb.SheetNames.filter(n =>
       /daily.stock|stock.statement|dip/i.test(n)
     );
     for (const sn of dipSheets) {
-      const rows = sheetToRows(wb, sn);
+      const ws = wb.Sheets[sn];
+      if (!ws) continue;
+      // range:2 skips rows 1-2 (empty + merged header) and uses row 3 as the column header row
+      const dipRows = XLSX.utils.sheet_to_json(ws, { defval: "", range: 2 }) as Record<string, unknown>[];
       let dipsImported = 0;
-      for (const row of rows) {
+      for (const row of dipRows) {
         const dateVal = row["Date"] ?? row["DATE"];
         if (!dateVal) continue;
         const reportDate = parseDate(dateVal);
-        if (reportDate === "Invalid Date") continue;
-        // Column F = "Dip" (physical dip stick reading, likely in KL or direct litres)
-        // Column G = "Manual Dip Reading" (the authoritative manual reading in litres)
-        // We prefer "Manual Dip Reading" as it is the operator-entered value
+        if (!reportDate || reportDate === "Invalid Date") continue;
+        // Petrol: "Manual Dip Reading" (litres) and "Dip" (raw stick number)
         const manualDipPetrolRaw = row["Manual Dip Reading"] ?? row["MANUAL DIP READING"] ?? row["Manual Dip"] ?? null;
-        const dipPetrolRaw = row["Dip"] ?? row["DIP"] ?? row["Dip Reading"] ?? row["DIP READING"] ?? null;
-        // For diesel, look for diesel-specific columns (the sheet has both MS-Petrol and Diesel sections)
-        const manualDipDieselRaw = row["Manual Dip Reading (Diesel)"] ?? row["Diesel Manual Dip"] ?? row["Manual Dip Reading.1"] ?? null;
-        const dipDieselRaw = row["Dip (Diesel)"] ?? row["Diesel Dip"] ?? row["Dip.1"] ?? null;
+        const dipPetrolRaw = row["Dip"] ?? row["DIP"] ?? null;
+        // Diesel: xlsx renames duplicate headers — try "_1" suffix first, then ".1"
+        const manualDipDieselRaw = row["Manual Dip Reading_1"] ?? row["Manual Dip Reading.1"] ?? row["Manual Dip Reading (Diesel)"] ?? row["Diesel Manual Dip"] ?? null;
+        const dipDieselRaw = row["Dip_1"] ?? row["Dip.1"] ?? row["Dip (Diesel)"] ?? row["Diesel Dip"] ?? null;
         try {
-          // Petrol dip: prefer Manual Dip Reading, fall back to Dip
-          const petrolVal = manualDipPetrolRaw ?? dipPetrolRaw;
-          if (petrolVal !== null && petrolVal !== "") {
-            const litres = parseFloat(parseNum(petrolVal));
+          // Petrol dip: store Manual Dip Reading (litres) + raw stick number
+          if (manualDipPetrolRaw !== null && manualDipPetrolRaw !== "") {
+            const litres = parseFloat(parseNum(String(manualDipPetrolRaw)));
+            const stick = dipPetrolRaw !== null && dipPetrolRaw !== "" ? parseFloat(parseNum(String(dipPetrolRaw))) : null;
             if (!isNaN(litres) && litres > 0) {
-              await upsertDipReading({ readingDate: reportDate, fuelType: "petrol", dipLitres: litres, recordedBy: "Excel Import" });
+              await upsertDipReading({
+                readingDate: reportDate, fuelType: "petrol", dipLitres: litres,
+                dipStickReading: stick && !isNaN(stick) ? stick : null,
+                recordedBy: "Excel Import",
+              });
               dipsImported++;
             }
           }
-          // Diesel dip: prefer Manual Dip Reading (Diesel), fall back to Dip (Diesel)
-          const dieselVal = manualDipDieselRaw ?? dipDieselRaw;
-          if (dieselVal !== null && dieselVal !== "") {
-            const litres = parseFloat(parseNum(dieselVal));
+          // Diesel dip: store Manual Dip Reading_1 (litres) + raw stick number
+          if (manualDipDieselRaw !== null && manualDipDieselRaw !== "") {
+            const litres = parseFloat(parseNum(String(manualDipDieselRaw)));
+            const stick = dipDieselRaw !== null && dipDieselRaw !== "" ? parseFloat(parseNum(String(dipDieselRaw))) : null;
             if (!isNaN(litres) && litres > 0) {
-              await upsertDipReading({ readingDate: reportDate, fuelType: "diesel", dipLitres: litres, recordedBy: "Excel Import" });
+              await upsertDipReading({
+                readingDate: reportDate, fuelType: "diesel", dipLitres: litres,
+                dipStickReading: stick && !isNaN(stick) ? stick : null,
+                recordedBy: "Excel Import",
+              });
               dipsImported++;
             }
           }

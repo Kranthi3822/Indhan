@@ -40,6 +40,7 @@ export const fuelIntelligenceRouter = router({
       fuelType: z.enum(["petrol", "diesel"]),
       tankId: z.string().default("T1"),
       dipLitres: z.number().min(0).max(50000),
+      dipStickReading: z.number().optional().nullable(), // raw dip stick number (unitless)
       readingTime: z.string().optional(),
       recordedBy: z.string().optional(),
       notes: z.string().optional(),

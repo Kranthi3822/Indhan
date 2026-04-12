@@ -35,22 +35,26 @@ function VarianceBadge({ variance }: { variance: number | null }) {
   );
 }
 
-/** Inline editable dip cell — shows current value or input field when editing */
+/** Inline editable dip cell — shows current value or input field when editing.
+ * Displays both raw dip stick number and Manual Dip Reading (litres) when available. */
 function DipCell({
   date,
   fuelType,
   currentDip,
+  currentDipStick,
   reportedClosing,
   onSaved,
 }: {
   date: string;
   fuelType: "petrol" | "diesel";
-  currentDip: number | null;
+  currentDip: number | null;        // Manual Dip Reading in litres
+  currentDipStick: number | null;   // Raw dip stick number (unitless)
   reportedClosing: number;
   onSaved: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(currentDip != null ? String(currentDip) : "");
+  const [litresVal, setLitresVal] = useState(currentDip != null ? String(currentDip) : "");
+  const [stickVal, setStickVal] = useState(currentDipStick != null ? String(currentDipStick) : "");
   const utils = trpc.useUtils();
 
   const saveDip = trpc.fuelIntelligence.saveDipReading.useMutation({
@@ -66,29 +70,43 @@ function DipCell({
   });
 
   const handleSave = useCallback(() => {
-    const litres = parseFloat(value);
+    const litres = parseFloat(litresVal);
     if (isNaN(litres) || litres < 0) {
       toast.error("Enter a valid litre reading.");
       return;
     }
-    saveDip.mutate({ readingDate: date, fuelType, dipLitres: litres });
-  }, [value, date, fuelType, saveDip]);
+    const stick = stickVal !== "" ? parseFloat(stickVal) : null;
+    saveDip.mutate({
+      readingDate: date,
+      fuelType,
+      dipLitres: litres,
+      dipStickReading: stick && !isNaN(stick) ? stick : null,
+    });
+  }, [litresVal, stickVal, date, fuelType, saveDip]);
 
   // Compute live preview variance while editing: Closing Stock − Dip Reading
-  const previewVariance = editing && value !== ""
-    ? reportedClosing - parseFloat(value)
+  const previewVariance = editing && litresVal !== ""
+    ? reportedClosing - parseFloat(litresVal)
     : null;
 
   if (editing) {
     return (
-      <div className="flex flex-col items-end gap-1 min-w-[110px]">
+      <div className="flex flex-col items-end gap-1 min-w-[130px]">
         <div className="flex items-center gap-1">
           <Input
             type="number"
-            value={value}
-            onChange={e => setValue(e.target.value)}
+            value={stickVal}
+            onChange={e => setStickVal(e.target.value)}
+            className="h-6 text-xs w-14 px-2 bg-secondary border-border/50"
+            placeholder="Stick"
+            title="Raw dip stick number"
+          />
+          <Input
+            type="number"
+            value={litresVal}
+            onChange={e => setLitresVal(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") setEditing(false); }}
-            className="h-6 text-xs w-24 px-2 bg-secondary border-amber-500/50 focus:border-amber-500"
+            className="h-6 text-xs w-20 px-2 bg-secondary border-amber-500/50 focus:border-amber-500"
             placeholder="Litres"
             autoFocus
           />
@@ -113,14 +131,24 @@ function DipCell({
 
   return (
     <div
-      className="flex items-center justify-end gap-1 cursor-pointer group"
-      onClick={() => { setValue(currentDip != null ? String(currentDip) : ""); setEditing(true); }}
+      className="flex flex-col items-end gap-0.5 cursor-pointer group"
+      onClick={() => {
+        setLitresVal(currentDip != null ? String(currentDip) : "");
+        setStickVal(currentDipStick != null ? String(currentDipStick) : "");
+        setEditing(true);
+      }}
       title="Click to enter/edit dip reading"
     >
-      {currentDip != null
-        ? <span className="tabular-nums text-amber-400 font-medium">{fmtL(currentDip)}</span>
-        : <span className="text-muted-foreground italic text-[10px]">Enter dip</span>
-      }
+      {currentDip != null ? (
+        <>
+          <span className="tabular-nums text-amber-400 font-medium">{fmtL(currentDip)} L</span>
+          {currentDipStick != null && (
+            <span className="text-[9px] text-muted-foreground tabular-nums">↑{currentDipStick}</span>
+          )}
+        </>
+      ) : (
+        <span className="text-muted-foreground italic text-[10px]">Enter dip</span>
+      )}
       <Pencil className="w-2.5 h-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
@@ -347,6 +375,7 @@ export default function DailyStockStatement() {
                             date={row.date}
                             fuelType="petrol"
                             currentDip={row.petrol.dipReading}
+                            currentDipStick={(row.petrol as any).dipStickReading ?? null}
                             reportedClosing={row.petrol.reportedClosing}
                             onSaved={() => setRefreshKey(k => k + 1)}
                           />
@@ -366,6 +395,7 @@ export default function DailyStockStatement() {
                             date={row.date}
                             fuelType="diesel"
                             currentDip={row.diesel.dipReading}
+                            currentDipStick={(row.diesel as any).dipStickReading ?? null}
                             reportedClosing={row.diesel.reportedClosing}
                             onSaved={() => setRefreshKey(k => k + 1)}
                           />

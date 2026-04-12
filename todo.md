@@ -623,3 +623,25 @@
 - [x] Frontend: DailyStockStatement — "No Dip Readings" banner now explains both manual entry and bulk Excel import options
 - [x] Frontend: DailyStockStatement — live variance preview while typing uses Closing Stock − typed value
 - [x] Inventory: Dip section confirmed to pull from same dip_readings table via getDipReadings procedure
+
+## Daily Stock Register — Simulated Dip Readings
+- [ ] Backend: getDailyStockStatement returns isSimulated flag per dip reading (true when no real dip exists)
+- [ ] Backend: Simulated dip = closing stock × 0.97 (3% evaporation/shrinkage estimate) when no real dip recorded
+- [ ] Backend: dipVariance calculated for both real and simulated dip readings
+- [ ] Frontend: DipCell shows "sim" badge (orange) when dip is simulated, amber value when real
+- [ ] Frontend: VarianceBadge shows variance for all rows (simulated and real)
+- [ ] Frontend: Clicking "Enter dip" on a simulated row opens inline input to enter real reading
+- [ ] Frontend: Real entry overrides simulated value and removes sim badge
+
+## Daily Stock Register — Dip Import Fix (Excel Column Mapping)
+- [x] Schema: dip_stick_reading column added to dip_readings table (migration applied)
+- [x] Import: fixed range:2 to skip rows 1-2 (empty + merged header), uses row 3 as column header row
+- [x] Import: reads "Dip" (col E) as raw stick number for Petrol; "Manual Dip Reading" (col F) as litres
+- [x] Import: reads "Dip_1"/"Dip.1" for Diesel stick; "Manual Dip Reading_1"/"Manual Dip Reading.1" for Diesel litres
+- [x] Backend: upsertDipReading stores dipStickReading alongside dipLitres
+- [x] Backend: getDailyStockStatement returns dipStickReading per row for both fuel types
+- [x] Backend: saveDipReading tRPC procedure accepts dipStickReading optional field
+- [x] Frontend: DipCell shows stick number (small grey) + litres (amber) when data exists
+- [x] Frontend: DipCell edit mode has two inputs — Stick and Litres
+- [x] Frontend: Dip Variance = Closing Stock − Manual Dip Reading (litres)
+- [ ] ACTION REQUIRED: Re-upload BEES Excel file via Data Import to backfill all historical dip readings

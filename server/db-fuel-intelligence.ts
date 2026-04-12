@@ -491,6 +491,7 @@ export async function upsertDipReading(data: {
   fuelType: "petrol" | "diesel";
   tankId?: string;
   dipLitres: number;
+  dipStickReading?: number | null;  // raw dip stick number (unitless)
   readingTime?: string;
   recordedBy?: string;
   notes?: string;
@@ -510,6 +511,7 @@ export async function upsertDipReading(data: {
     await db.execute(sql`
       UPDATE dip_readings SET
         dip_litres = ${data.dipLitres},
+        dip_stick_reading = ${data.dipStickReading ?? null},
         reading_time = ${data.readingTime ?? "08:00"},
         recorded_by = ${data.recordedBy ?? null},
         notes = ${data.notes ?? null}
@@ -518,8 +520,8 @@ export async function upsertDipReading(data: {
     return { id: row.id, updated: true };
   } else {
     const result = await db.execute(sql`
-      INSERT INTO dip_readings (reading_date, fuel_type, tank_id, dip_litres, reading_time, recorded_by, notes)
-      VALUES (${data.readingDate}, ${data.fuelType}, ${data.tankId ?? "T1"}, ${data.dipLitres}, ${data.readingTime ?? "08:00"}, ${data.recordedBy ?? null}, ${data.notes ?? null})
+      INSERT INTO dip_readings (reading_date, fuel_type, tank_id, dip_litres, dip_stick_reading, reading_time, recorded_by, notes)
+      VALUES (${data.readingDate}, ${data.fuelType}, ${data.tankId ?? "T1"}, ${data.dipLitres}, ${data.dipStickReading ?? null}, ${data.readingTime ?? "08:00"}, ${data.recordedBy ?? null}, ${data.notes ?? null})
     `) as any;
     return { id: (result[0] as any).insertId, updated: false };
   }

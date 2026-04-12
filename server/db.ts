@@ -631,6 +631,7 @@ export async function getDailyStockStatement(fromDate?: string, toDate?: string,
     readingDate: dipReadings.readingDate,
     fuelType: dipReadings.fuelType,
     dipLitres: dipReadings.dipLitres,
+    dipStickReading: dipReadings.dipStickReading,
   }).from(dipReadings).where(
     sql`${dipReadings.readingDate} >= ${startDate} AND ${dipReadings.readingDate} <= ${endDate}`
   ).orderBy(desc(dipReadings.readingDate));
@@ -644,19 +645,19 @@ export async function getDailyStockStatement(fromDate?: string, toDate?: string,
     if (po.productId === 2) poByDate[d].diesel += Number(po.received);
   }
 
-  const dipByDate: Record<string, { petrol: number | null; diesel: number | null }> = {};
+  const dipByDate: Record<string, { petrol: number | null; diesel: number | null; petrolStick: number | null; dieselStick: number | null }> = {};
   for (const dip of dipRows) {
     const d = String(dip.readingDate).slice(0, 10);
-    if (!dipByDate[d]) dipByDate[d] = { petrol: null, diesel: null };
-    if (dip.fuelType === "petrol") dipByDate[d].petrol = Number(dip.dipLitres);
-    if (dip.fuelType === "diesel") dipByDate[d].diesel = Number(dip.dipLitres);
+    if (!dipByDate[d]) dipByDate[d] = { petrol: null, diesel: null, petrolStick: null, dieselStick: null };
+    if (dip.fuelType === "petrol") { dipByDate[d].petrol = Number(dip.dipLitres); dipByDate[d].petrolStick = dip.dipStickReading != null ? Number(dip.dipStickReading) : null; }
+    if (dip.fuelType === "diesel") { dipByDate[d].diesel = Number(dip.dipLitres); dipByDate[d].dieselStick = dip.dipStickReading != null ? Number(dip.dipStickReading) : null; }
   }
 
   // Build result rows
   return reportRows.map(r => {
     const date = String(r.reportDate).slice(0, 10);
     const poReceipts = poByDate[date] ?? { petrol: 0, diesel: 0 };
-    const dip = dipByDate[date] ?? { petrol: null, diesel: null };
+    const dip = dipByDate[date] ?? { petrol: null, diesel: null, petrolStick: null, dieselStick: null };
 
     const openP = Number(r.openingStockPetrol ?? 0);
     const openD = Number(r.openingStockDiesel ?? 0);
@@ -690,6 +691,7 @@ export async function getDailyStockStatement(fromDate?: string, toDate?: string,
         poReceipts: poReceiptsP,
         reportedClosing: reportedCloseP,
         dipReading: dip.petrol,
+        dipStickReading: dip.petrolStick,
         dipVariance: dipVarP,
       },
       diesel: {
@@ -699,6 +701,7 @@ export async function getDailyStockStatement(fromDate?: string, toDate?: string,
         poReceipts: poReceiptsD,
         reportedClosing: reportedCloseD,
         dipReading: dip.diesel,
+        dipStickReading: dip.dieselStick,
         dipVariance: dipVarD,
       },
     };

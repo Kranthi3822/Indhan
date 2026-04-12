@@ -563,3 +563,14 @@
 ## Implied Receipts Diesel Fix
 - [x] Fix: Implied Receipts (Diesel) now uses period-boundary formula (Closing_last − Opening_first + Total Sales) = 9,46,000 L ✅
   Root cause: row-by-row sum was inflated by data entry errors in daily closing stock values
+
+## Manual Dip Reading Feature
+- [x] Schema: dip_readings table confirmed (date, fuelType, dipLitres, tankId, readingTime, recordedBy, notes)
+- [x] Backend: fuelIntelligence.saveDipReading tRPC procedure (upsert by date + fuelType) — already existed
+- [x] Backend: getDailyStockStatement now fetches dip_readings and joins by date
+- [x] Backend: Dip Variance formula = (Opening Stock + PO Receipts) − Manual Dip Reading (corrected from previous formula)
+- [x] Frontend: Daily Stock Statement — inline editable "Dip Reading" cells (amber, click-to-edit) in Petrol and Diesel columns
+- [x] Frontend: Save on Enter key or Save icon button; live variance preview while typing
+- [x] Frontend: Dip Variance column: red=loss, blue=gain, green=within 10L tolerance
+- [x] Frontend: Summary strip shows "Dip Readings: X / N days" counter
+- [x] Frontend: Info banner updated with correct formula explanation

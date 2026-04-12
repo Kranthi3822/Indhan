@@ -559,3 +559,7 @@
 ## Number Format Consistency — Sales & Nozzles KPI Cards
 - [x] Fix: Petrol Volume and Diesel Volume KPI cards now show full Indian-formatted volume as subtitle (e.g. 2,71,051.35 L) on hover
 - [x] All four KPI cards: Total Sales (₹12.10Cr / ₹12,10,18,929.01), Petrol Volume (271.1KL / 2,71,051.35 L), Diesel Volume (942.5KL / 9,42,537.70 L), Gross Profit (₹33.89L / ₹33,88,530.04)
+
+## Implied Receipts Diesel Fix
+- [x] Fix: Implied Receipts (Diesel) now uses period-boundary formula (Closing_last − Opening_first + Total Sales) = 9,46,000 L ✅
+  Root cause: row-by-row sum was inflated by data entry errors in daily closing stock values

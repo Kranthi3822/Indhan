@@ -41,8 +41,18 @@ export default function DailyStockStatement() {
     if (!rows || rows.length === 0) return null;
     const totalPetrolSales = rows.reduce((s, r) => s + r.petrol.meterSales, 0);
     const totalDieselSales = rows.reduce((s, r) => s + r.diesel.meterSales, 0);
-    const totalPetrolReceipts = rows.reduce((s, r) => s + r.petrol.impliedReceipts, 0);
-    const totalDieselReceipts = rows.reduce((s, r) => s + r.diesel.impliedReceipts, 0);
+    // Use period-boundary formula: Implied Receipts = Closing(last day) − Opening(first day) + Total Sales
+    // This is more accurate than summing row-by-row because daily closing stock entries
+    // may contain data entry errors that inflate the row-by-row sum.
+    const sortedRows = [...rows].sort((a, b) => a.date.localeCompare(b.date));
+    const firstRow = sortedRows[0];
+    const lastRow = sortedRows[sortedRows.length - 1];
+    const totalPetrolReceipts = Math.max(0,
+      lastRow.petrol.reportedClosing - firstRow.petrol.openingStock + totalPetrolSales
+    );
+    const totalDieselReceipts = Math.max(0,
+      lastRow.diesel.reportedClosing - firstRow.diesel.openingStock + totalDieselSales
+    );
     return { totalPetrolSales, totalDieselSales, totalPetrolReceipts, totalDieselReceipts };
   }, [rows]);
 

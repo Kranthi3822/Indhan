@@ -424,3 +424,16 @@
 - [x] Build BankStatementUpload.tsx page: drag-drop upload, parsing progress, preview table, catch-up banner, upload history
 - [x] Add Bank Sync nav item to DashboardLayout sidebar (Finance group)
 - [x] Add /bank-statement-upload route to App.tsx
+
+## Employee Data Cleanup & UI Colour Fixes
+- [ ] DB: Delete Lakshmi Devi employee record and all related data
+- [x] DB: Deleted all test employee records and related attendance/payroll data
+- [x] DB: Verified only Mahesh, Parandhamulu, Ashok, Anjaiah, Kiran remain (5 employees)
+- [x] Fix Attendance & Payroll page: dark zinc colours replaced with CSS variables
+- [x] Fix Assets & Equipment page: replace dark hardcoded zinc colours with CSS variable equivalents (bg-card, bg-muted, border-border)
+- [x] Fix Biometric Attendance page: dark zinc colours replaced with CSS variables
+- [x] Fix Payroll page: dark zinc colours replaced with CSS variables
+- [x] Employee DB cleanup: removed all test employees and Lakshmi Devi, kept only Mahesh, Ashok, Kiran, Parandhamulu, Anjaiah
+
+## Settings Page Bug
+- [x] Fix Settings page stuck on "Module loading..." — rebuilt as full Settings page with station info, fuel config, nozzle config, system preferences, and access control

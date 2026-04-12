@@ -94,7 +94,7 @@ export default function BiometricAttendance() {
       paid: 'bg-green-900/50 text-green-300 border-green-700',
       rejected: 'bg-red-900/50 text-red-300 border-red-700',
     };
-    return map[status] || 'bg-zinc-800 text-zinc-300';
+    return map[status] || 'bg-muted/50 text-foreground/80';
   };
 
   return (
@@ -479,10 +479,10 @@ function SetupPins() {
                 <div className="flex-1">
                   <p className="font-semibold">{item.employee.name}</p>
                   <div className="flex gap-2 mt-1">
-                    <Badge className={item.auth?.pinSet ? 'bg-green-900/50 text-green-300 text-xs' : 'bg-zinc-800 text-zinc-400 text-xs'}>
+                    <Badge className={item.auth?.pinSet ? 'bg-green-900/50 text-green-300 text-xs' : 'bg-muted/50 text-muted-foreground text-xs'}>
                       {item.auth?.pinSet ? '✓ PIN Set' : '✗ No PIN'}
                     </Badge>
-                    <Badge className={item.auth?.faceEnrolled ? 'bg-green-900/50 text-green-300 text-xs' : 'bg-zinc-800 text-zinc-400 text-xs'}>
+                    <Badge className={item.auth?.faceEnrolled ? 'bg-green-900/50 text-green-300 text-xs' : 'bg-muted/50 text-muted-foreground text-xs'}>
                       {item.auth?.faceEnrolled ? '✓ Face Enrolled' : '✗ No Face'}
                     </Badge>
                   </div>

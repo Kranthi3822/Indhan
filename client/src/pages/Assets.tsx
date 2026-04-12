@@ -81,7 +81,7 @@ function HealthBar({ score }: { score: number }) {
   const color = score >= 80 ? "bg-emerald-500" : score >= 50 ? "bg-teal-500" : "bg-red-500";
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${score}%` }} />
       </div>
       <span className="text-xs font-bold w-8 text-right">{score}%</span>
@@ -256,13 +256,13 @@ function AssetDetail({ asset }: { asset: any }) {
   const insuranceDays = daysUntil(asset.insuranceExpiry);
 
   return (
-    <div className="border border-zinc-800 rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       {/* Asset header */}
       <button
-        className="w-full p-4 flex items-center gap-3 hover:bg-zinc-800/30 transition-colors text-left"
+        className="w-full p-4 flex items-center gap-3 hover:bg-muted/50/30 transition-colors text-left"
         onClick={() => setExpanded(e => !e)}
       >
-        <div className="p-2 rounded-lg bg-zinc-800">
+        <div className="p-2 rounded-lg bg-muted/50">
           <Icon className="w-4 h-4 text-teal-400" />
         </div>
         <div className="flex-1 min-w-0">
@@ -290,7 +290,7 @@ function AssetDetail({ asset }: { asset: any }) {
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="border-t border-zinc-800 p-4 space-y-4">
+        <div className="border-t border-border p-4 space-y-4">
           {/* Asset info grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             {[
@@ -316,7 +316,7 @@ function AssetDetail({ asset }: { asset: any }) {
                 {schedules.map((s: any) => {
                   const due = daysUntil(s.nextDueDate);
                   return (
-                    <div key={s.id} className="flex items-center justify-between text-xs bg-zinc-800/50 rounded p-2">
+                    <div key={s.id} className="flex items-center justify-between text-xs bg-muted/50/50 rounded p-2">
                       <span>{s.maintenanceType}</span>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">{FREQ_LABELS[s.frequency]}</Badge>
@@ -364,10 +364,10 @@ function LogRow({ log, assetId, onUpdate }: { log: any; assetId: number; onUpdat
     onSuccess: () => utils.assets.listEvidence.invalidate({ logId: log.id }),
   });
 
-  const statusColor = log.status === 'completed' ? 'text-emerald-400' : log.status === 'partial' ? 'text-teal-400' : 'text-zinc-400';
+  const statusColor = log.status === 'completed' ? 'text-emerald-400' : log.status === 'partial' ? 'text-teal-400' : 'text-muted-foreground';
 
   return (
-    <div className="bg-zinc-800/40 rounded p-3 text-xs space-y-2">
+    <div className="bg-muted/50/40 rounded p-3 text-xs space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -391,13 +391,13 @@ function LogRow({ log, assetId, onUpdate }: { log: any; assetId: number; onUpdat
         </div>
       </div>
       {showEvidence && (
-        <div className="border-t border-zinc-700 pt-2">
+        <div className="border-t border-border pt-2">
           {evidence.length === 0 ? (
             <div className="text-muted-foreground text-center py-1">No evidence uploaded</div>
           ) : (
             <div className="flex flex-wrap gap-2">
               {evidence.map((ev: any) => (
-                <div key={ev.id} className="flex items-center gap-1 bg-zinc-700 rounded px-2 py-1">
+                <div key={ev.id} className="flex items-center gap-1 bg-muted rounded px-2 py-1">
                   {ev.fileType === 'image' ? <Image className="w-3 h-3 text-blue-400" /> : <FileText className="w-3 h-3 text-teal-400" />}
                   <a href={ev.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline max-w-32 truncate">{ev.fileName}</a>
                   <button onClick={() => deleteEvidence.mutate({ id: ev.id })} className="text-zinc-500 hover:text-red-400 ml-1">
@@ -431,7 +431,7 @@ function HealthDashboard() {
           { label: "Faulty", value: byStatus?.faulty ?? 0, color: "text-red-400" },
           { label: "Avg Health", value: `${Math.round(avgHealth ?? 0)}%`, color: avgHealth >= 80 ? "text-emerald-400" : avgHealth >= 50 ? "text-teal-400" : "text-red-400" },
         ].map(({ label, value, color }) => (
-          <Card key={label} className="bg-zinc-900 border-zinc-800">
+          <Card key={label} className="bg-card border-border">
             <CardContent className="p-3 text-center">
               <div className={`text-2xl font-bold ${color}`}>{value}</div>
               <div className="text-xs text-muted-foreground">{label}</div>
@@ -442,7 +442,7 @@ function HealthDashboard() {
 
       {/* Critical assets */}
       {criticalAssets?.length > 0 && (
-        <Card className="bg-zinc-900 border-red-900/50">
+        <Card className="bg-card border-red-900/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2 text-red-400">
               <AlertTriangle className="w-4 h-4" /> Critical Assets
@@ -471,7 +471,7 @@ function HealthDashboard() {
 
       {/* Upcoming maintenance */}
       {upcomingMaintenance?.length > 0 && (
-        <Card className="bg-zinc-900 border-teal-900/50">
+        <Card className="bg-card border-teal-900/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2 text-teal-400">
               <Calendar className="w-4 h-4" /> Upcoming Maintenance (30 days)
@@ -540,7 +540,7 @@ function NotificationsPanel() {
             const typeColor = n.notificationType === 'overdue' ? 'border-red-800 bg-red-950/20' :
                              n.notificationType === 'due_today' ? 'border-teal-800 bg-teal-950/20' :
                              n.notificationType === 'due_soon' ? 'border-yellow-800 bg-yellow-950/20' :
-                             'border-zinc-800 bg-zinc-900';
+                             'border-border bg-card';
             return (
               <div key={n.id} className={`border rounded-lg p-3 text-sm ${typeColor} ${n.isRead ? 'opacity-60' : ''}`}>
                 <div className="flex items-start justify-between gap-2">
@@ -609,7 +609,7 @@ export default function Assets() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-zinc-900">
+        <TabsList className="bg-card">
           <TabsTrigger value="health"><Activity className="w-3.5 h-3.5 mr-1" />Health</TabsTrigger>
           <TabsTrigger value="assets"><Package className="w-3.5 h-3.5 mr-1" />All Assets</TabsTrigger>
           <TabsTrigger value="notifications" className="relative">

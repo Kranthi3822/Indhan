@@ -266,9 +266,9 @@ export default function Payroll() {
           { icon: IndianRupee, label: "Net Pay", value: payrollRun ? fmt(payrollRun.totalNetPay) : "—", color: "text-emerald-400" },
           { icon: Building2, label: "Employer Cost", value: payrollRun ? fmt(Number(payrollRun.totalPfEmployer) + Number(payrollRun.totalEsiEmployer)) : "—", color: "text-purple-400" },
         ].map(({ icon: Icon, label, value, color }) => (
-          <Card key={label} className="bg-zinc-900 border-zinc-800">
+          <Card key={label} className="bg-card border-border">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-zinc-800"><Icon className={`w-4 h-4 ${color}`} /></div>
+              <div className="p-2 rounded-lg bg-muted/50"><Icon className={`w-4 h-4 ${color}`} /></div>
               <div>
                 <div className={`text-lg font-bold ${color}`}>{value}</div>
                 <div className="text-xs text-muted-foreground">{label}</div>
@@ -279,7 +279,7 @@ export default function Payroll() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-zinc-900">
+        <TabsList className="bg-card">
           <TabsTrigger value="attendance"><Calendar className="w-3.5 h-3.5 mr-1" />Attendance</TabsTrigger>
           <TabsTrigger value="payroll"><IndianRupee className="w-3.5 h-3.5 mr-1" />Payroll</TabsTrigger>
           <TabsTrigger value="employees"><Users className="w-3.5 h-3.5 mr-1" />Employees</TabsTrigger>
@@ -287,7 +287,7 @@ export default function Payroll() {
 
         {/* ── Attendance Tab ── */}
         <TabsContent value="attendance">
-          <Card className="bg-zinc-900 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">Attendance Register — {MONTH_NAMES[month-1]} {year}</CardTitle>
@@ -309,8 +309,8 @@ export default function Payroll() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-zinc-800">
-                        <th className="text-left p-2 pl-4 font-medium text-muted-foreground sticky left-0 bg-zinc-900 min-w-32">Employee</th>
+                      <tr className="border-b border-border">
+                        <th className="text-left p-2 pl-4 font-medium text-muted-foreground sticky left-0 bg-card min-w-32">Employee</th>
                         {days.map(d => {
                           const dow = new Date(year, month-1, d).getDay();
                           const isSun = dow === 0;
@@ -329,8 +329,8 @@ export default function Payroll() {
                         const daysPresent = Object.values(empAtt).reduce((s, st) =>
                           s + (st === 'present' ? 1 : st === 'half_day' ? 0.5 : 0), 0);
                         return (
-                          <tr key={emp.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
-                            <td className="p-2 pl-4 sticky left-0 bg-zinc-900">
+                          <tr key={emp.id} className="border-b border-border/50 hover:bg-muted/50/30">
+                            <td className="p-2 pl-4 sticky left-0 bg-card">
                               <div className="font-medium">{emp.name}</div>
                               <div className="text-muted-foreground">{emp.role}</div>
                             </td>
@@ -347,7 +347,7 @@ export default function Payroll() {
                                       const next = !status ? 'present' : status === 'present' ? 'absent' : status === 'absent' ? 'half_day' : status === 'half_day' ? 'leave' : 'present';
                                       markAttendance.mutate({ employeeId: emp.id, attendanceDate: dateStr, status: next as any });
                                     }}
-                                    className={`w-6 h-6 rounded text-xs font-bold transition-all hover:scale-110 ${cfg ? `${cfg.color} ${cfg.text}` : isSun ? 'bg-zinc-800 text-red-400/50' : 'bg-zinc-800 text-zinc-600 hover:bg-zinc-700'}`}
+                                    className={`w-6 h-6 rounded text-xs font-bold transition-all hover:scale-110 ${cfg ? `${cfg.color} ${cfg.text}` : isSun ? 'bg-muted/50 text-red-400/50' : 'bg-muted/50 text-zinc-600 hover:bg-muted'}`}
                                     title={cfg?.full ?? (isSun ? 'Sunday' : 'Click to mark')}
                                   >
                                     {cfg ? cfg.label : isSun ? '—' : '·'}
@@ -371,7 +371,7 @@ export default function Payroll() {
         <TabsContent value="payroll">
           <div className="space-y-4">
             {/* Payroll run controls */}
-            <Card className="bg-zinc-900 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardContent className="p-4 flex items-center justify-between gap-4">
                 <div>
                   <div className="text-sm font-medium">Payroll Run — {MONTH_NAMES[month-1]} {year}</div>
@@ -425,7 +425,7 @@ export default function Payroll() {
                   { label: "ESI (Employer)", value: payrollRun.totalEsiEmployer, color: "text-purple-400" },
                   { label: "Total Employer Cost", value: Number(payrollRun.totalGross) + Number(payrollRun.totalPfEmployer) + Number(payrollRun.totalEsiEmployer), color: "text-blue-400" },
                 ].map(({ label, value, color }) => (
-                  <Card key={label} className="bg-zinc-900 border-zinc-800">
+                  <Card key={label} className="bg-card border-border">
                     <CardContent className="p-3">
                       <div className={`text-base font-bold ${color}`}>{fmtFull(value)}</div>
                       <div className="text-xs text-muted-foreground">{label}</div>
@@ -437,14 +437,14 @@ export default function Payroll() {
 
             {/* Payslip table */}
             {payslips.length > 0 && (
-              <Card className="bg-zinc-900 border-zinc-800">
+              <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Individual Payslips</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-800 text-xs text-muted-foreground">
+                      <tr className="border-b border-border text-xs text-muted-foreground">
                         <th className="text-left p-3">Employee</th>
                         <th className="text-right p-3">Days</th>
                         <th className="text-right p-3">Gross</th>
@@ -458,7 +458,7 @@ export default function Payroll() {
                     </thead>
                     <tbody>
                       {payslips.map((slip: any) => (
-                        <tr key={slip.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                        <tr key={slip.id} className="border-b border-border/50 hover:bg-muted/50/30">
                           <td className="p-3">
                             <div className="font-medium">{slip.employeeName}</div>
                             <div className="text-xs text-muted-foreground">{slip.role}</div>
@@ -496,7 +496,7 @@ export default function Payroll() {
 
         {/* ── Employees Tab ── */}
         <TabsContent value="employees">
-          <Card className="bg-zinc-900 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-0">
               {employees.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground text-sm">
@@ -505,7 +505,7 @@ export default function Payroll() {
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-800 text-xs text-muted-foreground">
+                    <tr className="border-b border-border text-xs text-muted-foreground">
                       <th className="text-left p-3">Name</th>
                       <th className="text-left p-3">Role</th>
                       <th className="text-left p-3">Dept</th>
@@ -520,7 +520,7 @@ export default function Payroll() {
                     {employees.map(emp => {
                       const gross = Number(emp.basicSalary) + Number(emp.hra ?? 0) + Number(emp.otherAllowances ?? 0);
                       return (
-                        <tr key={emp.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                        <tr key={emp.id} className="border-b border-border/50 hover:bg-muted/50/30">
                           <td className="p-3">
                             <div className="font-medium">{emp.name}</div>
                             <div className="text-xs text-muted-foreground">{emp.phone}</div>

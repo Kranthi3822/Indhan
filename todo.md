@@ -482,3 +482,12 @@
 - [x] Fuel section: Diesel (HSD) and Petrol (MS) side by side
 - [x] Lubricants section: ADON-Oil, Servo 2T, Servo 4T in a row (compact gauge cards)
 - [x] Low stock badge count shown in widget header (red badge)
+
+## Theme Change — Amber Station (Option D)
+- [x] Replace ServCrust teal palette with Amber Station: warm dark brown background + gold/amber accents
+- [x] Update dark theme CSS variables in index.css (background oklch(0.13 0.025 60), primary oklch(0.78 0.18 72))
+- [x] Update light theme CSS variables in index.css (warm off-white background, amber primary)
+- [x] Update sidebar active/hover colours to amber
+- [x] Update primary button colour to amber
+- [x] Update chart colours to amber/gold/orange palette
+- [x] Update scrollbar colours to match amber theme

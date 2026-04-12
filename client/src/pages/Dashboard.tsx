@@ -37,12 +37,15 @@ const fmtCompact = (n: number) => {
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
-function KpiCard({ title, value, sub, icon: Icon, trend, trendVal, colorClass }: {
-  title: string; value: string; sub?: string; icon: React.ElementType;
+function KpiCard({ title, value, rawValue, sub, icon: Icon, trend, trendVal, colorClass }: {
+  title: string; value: string; rawValue?: number; sub?: string; icon: React.ElementType;
   trend?: "up" | "down"; trendVal?: string; colorClass: string;
 }) {
+  const fullAmt = rawValue !== undefined
+    ? new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(rawValue)
+    : null;
   return (
-    <Card className="bg-card border-border/50">
+    <Card className="group bg-card border-border/50 cursor-default" title={fullAmt ?? undefined}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-3">
           <div className={`w-9 h-9 rounded-lg border flex items-center justify-center ${colorClass}`}>
@@ -56,6 +59,9 @@ function KpiCard({ title, value, sub, icon: Icon, trend, trendVal, colorClass }:
           )}
         </div>
         <p className="text-2xl font-bold tabular-nums tracking-tight">{value}</p>
+        {fullAmt && (
+          <p className="text-[11px] tabular-nums text-muted-foreground/40 group-hover:text-muted-foreground transition-colors duration-150 mt-0.5">{fullAmt}</p>
+        )}
         <p className="text-xs font-medium text-muted-foreground mt-0.5">{title}</p>
         {sub && <p className="text-[11px] text-muted-foreground/60 mt-0.5">{sub}</p>}
       </CardContent>
@@ -181,6 +187,13 @@ export default function Dashboard() {
   const totalCollected = Number(kpis?.totalCollected ?? 0);
   const collectionRate = totalSales > 0 ? ((totalCollected / totalSales) * 100).toFixed(1) : "0";
   const netMargin = totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : "0";
+  const totalPurchasePetrol = Number(kpis?.totalPurchasePetrol ?? 0);
+  const totalPurchaseDiesel = Number(kpis?.totalPurchaseDiesel ?? 0);
+  const totalPurchaseLubricants = Number(kpis?.totalPurchaseLubricants ?? 0);
+  const totalPurchasePetrolQty = Number(kpis?.totalPurchasePetrolQty ?? 0);
+  const totalPurchaseDieselQty = Number(kpis?.totalPurchaseDieselQty ?? 0);
+  const totalPurchaseLubricantsQty = Number(kpis?.totalPurchaseLubricantsQty ?? 0);
+  const totalPurchase = Number(kpis?.totalPurchase ?? 0);
 
   return (
     <div className="space-y-6">
@@ -248,11 +261,11 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <KpiCard title="Total Sales" value={isLoading ? "—" : fmtCompact(totalSales)} sub={period === "today" ? "31 Mar 2026" : period === "week" ? "25–31 Mar 2026" : period === "ytd" ? "Apr 2025 – Mar 2026" : period === "custom" ? `${appliedFrom} – ${appliedTo}` : "Mar 2026"} icon={IndianRupee} trend="up" trendVal="+8.2%" colorClass="text-primary bg-primary/10 border-primary/20" />
-        <KpiCard title="Gross Profit" value={isLoading ? "—" : fmtCompact(grossProfit)} sub={`Fuel margin earned`} icon={TrendingUp} colorClass="text-amber-400 bg-amber-500/10 border-amber-500/20" />
-        <KpiCard title="Expenses" value={isLoading ? "—" : fmtCompact(totalExpenses)} sub="Operating costs" icon={Package} trend={totalExpenses > grossProfit * 0.5 ? "down" : undefined} colorClass="text-red-400 bg-red-500/10 border-red-500/20" />
-        <KpiCard title="Net Profit" value={isLoading ? "—" : fmtCompact(netProfit)} sub={`Margin: ${netMargin}% • Gross − Expenses`} icon={TrendingUp} trend={netProfit >= 0 ? "up" : "down"} trendVal={`${netMargin}%`} colorClass={netProfit >= 0 ? "text-green-400 bg-green-500/10 border-green-500/20" : "text-red-400 bg-red-500/10 border-red-500/20"} />
-        <KpiCard title="Outstanding" value={isLoading ? "—" : fmtCompact(totalReceivables)} sub={`Collection: ${collectionRate}%`} icon={CreditCard} trend={totalReceivables > 500000 ? "down" : "up"} trendVal={`${collectionRate}%`} colorClass={totalReceivables > 500000 ? "text-red-400 bg-red-500/10 border-red-500/20" : "text-green-400 bg-green-500/10 border-green-500/20"} />
+        <KpiCard title="Total Sales" value={isLoading ? "—" : fmtCompact(totalSales)} rawValue={isLoading ? undefined : totalSales} sub={period === "today" ? "31 Mar 2026" : period === "week" ? "25–31 Mar 2026" : period === "ytd" ? "Apr 2025 – Mar 2026" : period === "custom" ? `${appliedFrom} – ${appliedTo}` : "Mar 2026"} icon={IndianRupee} trend="up" trendVal="+8.2%" colorClass="text-primary bg-primary/10 border-primary/20" />
+        <KpiCard title="Gross Profit" value={isLoading ? "—" : fmtCompact(grossProfit)} rawValue={isLoading ? undefined : grossProfit} sub={`Fuel margin earned`} icon={TrendingUp} colorClass="text-amber-400 bg-amber-500/10 border-amber-500/20" />
+        <KpiCard title="Expenses" value={isLoading ? "—" : fmtCompact(totalExpenses)} rawValue={isLoading ? undefined : totalExpenses} sub="Operating costs" icon={Package} trend={totalExpenses > grossProfit * 0.5 ? "down" : undefined} colorClass="text-red-400 bg-red-500/10 border-red-500/20" />
+        <KpiCard title="Net Profit" value={isLoading ? "—" : fmtCompact(netProfit)} rawValue={isLoading ? undefined : netProfit} sub={`Margin: ${netMargin}% • Gross − Expenses`} icon={TrendingUp} trend={netProfit >= 0 ? "up" : "down"} trendVal={`${netMargin}%`} colorClass={netProfit >= 0 ? "text-green-400 bg-green-500/10 border-green-500/20" : "text-red-400 bg-red-500/10 border-red-500/20"} />
+        <KpiCard title="Outstanding" value={isLoading ? "—" : fmtCompact(totalReceivables)} rawValue={isLoading ? undefined : totalReceivables} sub={`Collection: ${collectionRate}%`} icon={CreditCard} trend={totalReceivables > 500000 ? "down" : "up"} trendVal={`${collectionRate}%`} colorClass={totalReceivables > 500000 ? "text-red-400 bg-red-500/10 border-red-500/20" : "text-green-400 bg-green-500/10 border-green-500/20"} />
       </div>
 
       <Card className="bg-card border-border/50">
@@ -274,6 +287,94 @@ export default function Dashboard() {
             <div className="flex items-center gap-2"><Fuel className="w-4 h-4" /><span className="text-sm font-semibold">Lubricants</span></div>
             <span className="text-sm font-bold tabular-nums">Variable</span>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Total Purchase by Products */}
+      <Card className="bg-card border-border/50">
+        <CardHeader className="pb-3 pt-4 px-5">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Package className="w-4 h-4 text-primary" /> Total Purchase by Products
+            </CardTitle>
+            {!isLoading && totalPurchase > 0 && (
+              <span className="text-xs font-bold text-foreground tabular-nums" title={new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(totalPurchase)}>
+                Total: {fmtCompact(totalPurchase)}
+              </span>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="px-5 pb-4">
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[0,1,2].map(i => <div key={i} className="h-24 rounded-lg bg-muted/30 animate-pulse" />)}
+            </div>
+          ) : totalPurchase === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">No purchase data for selected period</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Petrol */}
+              <div className="p-4 rounded-lg border border-amber-500/20 bg-amber-500/5 space-y-2"
+                title={new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(totalPurchasePetrol)}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-amber-400">
+                    <Fuel className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Petrol (MS)</span>
+                  </div>
+                  {totalPurchasePetrolQty > 0 && (
+                    <span className="text-[10px] text-muted-foreground bg-muted/40 px-1.5 py-0.5 rounded">
+                      {(totalPurchasePetrolQty/1000).toFixed(1)}KL
+                    </span>
+                  )}
+                </div>
+                <p className="text-xl font-bold tabular-nums text-amber-400">{fmtCompact(totalPurchasePetrol)}</p>
+                <div className="w-full bg-muted/30 rounded-full h-1.5">
+                  <div className="h-1.5 rounded-full bg-amber-400/70" style={{ width: `${Math.min(100,(totalPurchasePetrol/totalPurchase)*100).toFixed(1)}%` }} />
+                </div>
+                <p className="text-[10px] text-muted-foreground">{((totalPurchasePetrol/totalPurchase)*100).toFixed(1)}% of total</p>
+              </div>
+              {/* Diesel */}
+              <div className="p-4 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-2"
+                title={new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(totalPurchaseDiesel)}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-blue-400">
+                    <Fuel className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Diesel (HSD)</span>
+                  </div>
+                  {totalPurchaseDieselQty > 0 && (
+                    <span className="text-[10px] text-muted-foreground bg-muted/40 px-1.5 py-0.5 rounded">
+                      {(totalPurchaseDieselQty/1000).toFixed(1)}KL
+                    </span>
+                  )}
+                </div>
+                <p className="text-xl font-bold tabular-nums text-blue-400">{fmtCompact(totalPurchaseDiesel)}</p>
+                <div className="w-full bg-muted/30 rounded-full h-1.5">
+                  <div className="h-1.5 rounded-full bg-blue-400/70" style={{ width: `${Math.min(100,(totalPurchaseDiesel/totalPurchase)*100).toFixed(1)}%` }} />
+                </div>
+                <p className="text-[10px] text-muted-foreground">{((totalPurchaseDiesel/totalPurchase)*100).toFixed(1)}% of total</p>
+              </div>
+              {/* Lubricants */}
+              <div className="p-4 rounded-lg border border-green-500/20 bg-green-500/5 space-y-2"
+                title={new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(totalPurchaseLubricants)}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-green-400">
+                    <Fuel className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Lubricants</span>
+                  </div>
+                  {totalPurchaseLubricantsQty > 0 && (
+                    <span className="text-[10px] text-muted-foreground bg-muted/40 px-1.5 py-0.5 rounded">
+                      {totalPurchaseLubricantsQty.toFixed(0)}L
+                    </span>
+                  )}
+                </div>
+                <p className="text-xl font-bold tabular-nums text-green-400">{totalPurchaseLubricants > 0 ? fmtCompact(totalPurchaseLubricants) : '₹0'}</p>
+                <div className="w-full bg-muted/30 rounded-full h-1.5">
+                  <div className="h-1.5 rounded-full bg-green-400/70" style={{ width: `${Math.min(100,(totalPurchaseLubricants/totalPurchase)*100).toFixed(1)}%` }} />
+                </div>
+                <p className="text-[10px] text-muted-foreground">{((totalPurchaseLubricants/totalPurchase)*100).toFixed(1)}% of total</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

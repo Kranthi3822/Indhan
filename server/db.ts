@@ -89,6 +89,36 @@ export async function getDashboardKPIs(startDate: string, endDate: string) {
   const recRows = await db.select({
     totalReceivables: sql<number>`COALESCE(SUM(outstandingBalance), 0)`,
   }).from(customers).where(sql`outstandingBalance > 0`);
+  // Purchase totals by product category for the selected date range
+  const purchaseRows = await db.execute(
+    sql`SELECT
+      p.category,
+      p.name as productName,
+      COALESCE(SUM(po.quantityOrdered), 0) as totalQty,
+      COALESCE(SUM(po.totalAmount), 0) as totalAmount
+    FROM purchase_orders po
+    JOIN products p ON p.id = po.productId
+    WHERE po.orderDate >= ${startDate} AND po.orderDate <= ${endDate}
+    GROUP BY p.category, p.name
+    ORDER BY p.category, totalAmount DESC`
+  ) as any;
+  const purchaseByProduct: Array<{ category: string; productName: string; totalQty: number; totalAmount: number }> =
+    (purchaseRows[0] as any[]).map((r: any) => ({
+      category: r.category,
+      productName: r.productName,
+      totalQty: Number(r.totalQty),
+      totalAmount: Number(r.totalAmount),
+    }));
+  // Aggregate by category
+  const purchasePetrol = purchaseByProduct.filter(r => r.category === 'fuel' && r.productName.toLowerCase().includes('petrol'));
+  const purchaseDiesel = purchaseByProduct.filter(r => r.category === 'fuel' && r.productName.toLowerCase().includes('diesel'));
+  const purchaseLubricants = purchaseByProduct.filter(r => r.category === 'lubricant');
+  const totalPurchasePetrol = purchasePetrol.reduce((s, r) => s + r.totalAmount, 0);
+  const totalPurchaseDiesel = purchaseDiesel.reduce((s, r) => s + r.totalAmount, 0);
+  const totalPurchaseLubricants = purchaseLubricants.reduce((s, r) => s + r.totalAmount, 0);
+  const totalPurchasePetrolQty = purchasePetrol.reduce((s, r) => s + r.totalQty, 0);
+  const totalPurchaseDieselQty = purchaseDiesel.reduce((s, r) => s + r.totalQty, 0);
+  const totalPurchaseLubricantsQty = purchaseLubricants.reduce((s, r) => s + r.totalQty, 0);
 
   const salesResult = salesRows[0];
   const totalExpenses = Number(expRows[0]?.totalExpenses ?? 0);
@@ -101,6 +131,15 @@ export async function getDashboardKPIs(startDate: string, endDate: string) {
     totalExpenses,
     netProfit,
     totalReceivables: recRows[0]?.totalReceivables ?? 0,
+    // Purchase by product
+    purchaseByProduct,
+    totalPurchasePetrol,
+    totalPurchaseDiesel,
+    totalPurchaseLubricants,
+    totalPurchasePetrolQty,
+    totalPurchaseDieselQty,
+    totalPurchaseLubricantsQty,
+    totalPurchase: totalPurchasePetrol + totalPurchaseDiesel + totalPurchaseLubricants,
   };
 }
 

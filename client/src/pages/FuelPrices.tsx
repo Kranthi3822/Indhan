@@ -207,7 +207,7 @@ export default function FuelPrices() {
 
       {/* Current Price Summary */}
       {(latestPetrol || latestDiesel) && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             { data: latestPetrol, trend: petrolTrend, label: "Petrol (MS)", color: "teal" as const },
             { data: latestDiesel, trend: dieselTrend, label: "Diesel (HSD)", color: "blue" as const },

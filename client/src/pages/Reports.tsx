@@ -133,7 +133,7 @@ export default function Reports() {
       <Card className="bg-card border-border/50">
         <CardHeader className="pb-2 pt-4 px-5"><CardTitle className="text-sm font-semibold">Fuel Margins</CardTitle></CardHeader>
         <CardContent className="px-5 pb-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-xl bg-secondary/40 border border-border/40">
               <p className="text-xs text-muted-foreground mb-1">Petrol Margin</p>
               <p className="text-2xl font-bold text-primary">₹3.95<span className="text-sm font-normal text-muted-foreground">/L</span></p>

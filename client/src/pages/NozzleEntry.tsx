@@ -488,7 +488,7 @@ export default function NozzleEntry() {
               {collMode === "digital" && (
                 <div className="space-y-1.5">
                   <Label className="text-xs">Digital Payment Type</Label>
-                  <div className="grid grid-cols-5 gap-1">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-1">
                     {([
                       { sub: "upi" as const, label: "UPI" },
                       { sub: "phonepe" as const, label: "PhonePe" },

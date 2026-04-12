@@ -111,8 +111,8 @@ function AddAssetDialog({ onSuccess }: { onSuccess: () => void }) {
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Add Asset</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3 text-sm max-h-[70vh] overflow-y-auto pr-1">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm max-h-[70vh] overflow-y-auto pr-1">
+          <div className="col-span-2 sm:col-span-2">
             <Label>Asset Name *</Label>
             <Input value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="e.g. Petrol Dispenser #1" />
           </div>
@@ -178,7 +178,7 @@ function AddLogDialog({ assetId, onSuccess }: { assetId: number; onSuccess: () =
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Log Maintenance</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div><Label>Date *</Label><Input type="date" value={form.doneDate} onChange={e => setForm(f => ({...f, doneDate: e.target.value}))} /></div>
           <div>
             <Label>Status</Label>

@@ -224,7 +224,7 @@ export default function Sales() {
       )}
 
       {/* KPI Cards — compact + full exact */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           icon={IndianRupee}
           label="Total Sales"
@@ -262,7 +262,7 @@ export default function Sales() {
       </div>
 
       {/* Payment Method Cards — compact + full exact */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <PaymentCard icon={Wallet}     label="Cash"        amount={summary?.cash   ?? 0} color={PAYMENT_COLORS.Cash}   />
         <PaymentCard icon={CreditCard} label="Card / POS"  amount={summary?.card   ?? 0} color={PAYMENT_COLORS.Card}   />
         <PaymentCard icon={Users}      label="Credit Sales" amount={summary?.credit ?? 0} color={PAYMENT_COLORS.Credit} />

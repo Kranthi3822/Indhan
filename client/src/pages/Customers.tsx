@@ -100,7 +100,7 @@ export default function Customers() {
                 <Label className="text-xs">Name *</Label>
                 <Input placeholder="e.g. Laxmi Infratech" className="bg-secondary border-border/50 h-8 text-sm" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5"><Label className="text-xs">Contact</Label><Input placeholder="Name" className="bg-secondary border-border/50 h-8 text-sm" value={form.contactPerson} onChange={e => setForm(f => ({ ...f, contactPerson: e.target.value }))} /></div>
                 <div className="space-y-1.5"><Label className="text-xs">Phone</Label><Input placeholder="+91..." className="bg-secondary border-border/50 h-8 text-sm" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
                 <div className="space-y-1.5"><Label className="text-xs">Credit Limit (₹)</Label><Input placeholder="0" className="bg-secondary border-border/50 h-8 text-sm" value={form.creditLimit} onChange={e => setForm(f => ({ ...f, creditLimit: e.target.value }))} /></div>
@@ -118,7 +118,7 @@ export default function Customers() {
       {/* KPI strip + Aging donut */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* KPI cards */}
-        <div className="grid grid-cols-3 lg:grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
           <Card className="bg-card border-border/50">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">

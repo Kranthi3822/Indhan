@@ -379,7 +379,7 @@ export default function ReceiptScanner() {
               )}
             </CardHeader>
             <CardContent className="px-5 pb-5 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="w-3 h-3" /> Supplier <span className="text-red-400">*</span>{fcBadge("supplierName")}</Label>
                   <Input value={form.supplierName} onChange={e => setForm(f => ({ ...f, supplierName: e.target.value }))} placeholder="e.g. HPCL" className="h-9 text-sm" />
@@ -390,7 +390,7 @@ export default function ReceiptScanner() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> Invoice Date <span className="text-red-400">*</span>{fcBadge("invoiceDate")}</Label>
                   <Input type="date" value={form.invoiceDate} onChange={e => setForm(f => ({ ...f, invoiceDate: e.target.value }))} className="h-9 text-sm" />
@@ -409,7 +409,7 @@ export default function ReceiptScanner() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Quantity (L) <span className="text-red-400">*</span>{fcBadge("quantityLitres")}</Label>
                   <Input type="number" step="0.001" min="0" value={form.quantityLitres} onChange={e => setForm(f => ({ ...f, quantityLitres: e.target.value }))} placeholder="e.g. 9460" className="h-9 text-sm" />
@@ -424,7 +424,7 @@ export default function ReceiptScanner() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Tax / GST Amount ₹</Label>
                   <Input type="number" step="0.01" min="0" value={form.taxAmount} onChange={e => setForm(f => ({ ...f, taxAmount: e.target.value }))} placeholder="0" className="h-9 text-sm" />
@@ -461,7 +461,7 @@ export default function ReceiptScanner() {
 
               {/* Calculated summary */}
               {form.quantityLitres && form.unitPrice && (
-                <div className="p-3 rounded-lg border border-border/30 bg-muted/10 grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 rounded-lg border border-border/30 bg-muted/10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
                   <div>
                     <p className="text-[10px] text-muted-foreground">Quantity</p>
                     <p className="text-sm font-bold tabular-nums">{parseFloat(form.quantityLitres).toLocaleString("en-IN")} L</p>
@@ -510,7 +510,7 @@ export default function ReceiptScanner() {
               <p className="text-sm text-muted-foreground mt-1">{confirmResult?.message ?? `PO #${confirmedPoId} created`}</p>
             </div>
             {confirmResult && (
-              <div className="w-full grid grid-cols-3 gap-3">
+              <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-2.5 rounded-lg bg-muted/20 text-center">
                   <p className="text-[10px] text-muted-foreground">Old Cost</p>
                   <p className="text-sm font-bold tabular-nums">₹{confirmResult.oldCostPrice?.toFixed(2) ?? "—"}/L</p>

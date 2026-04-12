@@ -63,8 +63,8 @@ export default function Employees() {
           <DialogContent className="bg-card border-border/50">
             <DialogHeader><DialogTitle>Add Employee</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2 col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2 col-span-2 sm:col-span-2">
                   <Label>Full Name *</Label>
                   <Input placeholder="Employee name" className="bg-secondary border-border/50" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                 </div>

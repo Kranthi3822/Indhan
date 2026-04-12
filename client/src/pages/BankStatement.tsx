@@ -122,7 +122,7 @@ export default function BankStatement() {
           <DialogContent className="bg-card border-border/50">
             <DialogHeader><DialogTitle>Record Bank Transaction</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Date</Label>
                   <Input type="date" className="bg-secondary border-border/50" value={form.transactionDate} onChange={e => setForm(f => ({ ...f, transactionDate: e.target.value }))} />

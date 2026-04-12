@@ -59,8 +59,8 @@ function AddEmployeeDialog({ onSuccess }: { onSuccess: () => void }) {
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Add Employee</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="col-span-2 sm:col-span-2">
             <Label>Full Name *</Label>
             <Input value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="e.g. Mahesh Kumar" />
           </div>

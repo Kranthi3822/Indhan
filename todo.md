@@ -578,3 +578,26 @@
 ## Diesel Stock Persistent Reversion Bug
 - [x] Fix: Diesel currentStock reverted to 0 on every server restart — root cause: startup sync was silently failing (DB not ready at server.listen time)
 - [x] Permanent fix: getAllProducts() now JOINs daily_reports at query time and overrides currentStock for Petrol/Diesel with latest closingStock values — no sync step needed, always correct
+
+## Mobile Optimisation (Full Pass)
+- [x] DashboardLayout: sidebar overlay on mobile via shadcn Sheet drawer + SidebarTrigger hamburger in header
+- [x] Dashboard: KPI grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5; chart height responsive
+- [x] Dashboard: Fuel Intelligence cards stack vertically on mobile
+- [x] Inventory: KPI grid responsive; table wrapped in overflow-x-auto with min-w-[600px]
+- [x] Inventory: BarcodeScanner modal full-screen on mobile
+- [x] Sales & Nozzles: KPI grid responsive; payment cards 2-col on mobile; table overflow-x-auto
+- [x] Reconciliation: nozzle volume strip uses grid-cols-2 (2 items — fine on mobile)
+- [x] Bank Statement: filter bar wraps on mobile; table overflow-x-auto; dialog form grid-cols-1 sm:grid-cols-2
+- [x] P&L Reports: KPI grid grid-cols-2 sm:grid-cols-4; table overflow-x-auto
+- [x] Customers: table overflow-x-auto; dialog form grid-cols-1 sm:grid-cols-2
+- [x] Expenses: filter bar responsive; table overflow-x-auto; dialog form grids grid-cols-1 sm:grid-cols-2
+- [x] Daily Stock Statement: table overflow-x-auto with min-w; summary strip wraps on mobile
+- [x] Nozzle Entry: form fields full-width on mobile; shift/payment mode selectors 3-col tap buttons
+- [x] Assets: Add Asset dialog grid-cols-1 sm:grid-cols-2; Log Maintenance dialog grid-cols-1 sm:grid-cols-2
+- [x] Payroll: Add Employee dialog grid-cols-1 sm:grid-cols-2
+- [x] ReceiptScanner: all form grids grid-cols-1 sm:grid-cols-2/3; summary strips grid-cols-1 sm:grid-cols-3
+- [x] FuelPrices: current price summary grid-cols-1 sm:grid-cols-2
+- [x] Employees: dialog form grid-cols-1 sm:grid-cols-2
+- [x] Header: h-14 on mobile, h-16 on desktop; content padding p-3 on mobile, p-6 on desktop
+- [ ] Publish app to production URL then test install prompt on Android Chrome
+- [ ] Verify iOS "Add to Home Screen" works on published URL

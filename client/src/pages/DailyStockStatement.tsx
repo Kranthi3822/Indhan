@@ -292,7 +292,7 @@ export default function DailyStockStatement() {
             <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">No data for selected period</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-xs min-w-[900px]">
                 <thead>
                   <tr className="border-b border-border/50">
                     <th className="text-left px-4 py-2 text-muted-foreground font-medium w-24">Date</th>

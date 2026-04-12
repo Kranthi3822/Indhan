@@ -307,7 +307,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         <StatCard label="Total Sales" value={isLoading ? "—" : fmtCompact(totalSales)} rawValue={isLoading ? undefined : totalSales} sub={period === "today" ? "31 Mar 2026" : period === "week" ? "25–31 Mar 2026" : period === "ytd" ? "Apr 2025 – Mar 2026" : period === "custom" ? `${appliedFrom} – ${appliedTo}` : "Mar 2026"} icon={IndianRupee} trend="up" trendVal="+8.2%" colorClass="text-primary bg-primary/10 border-primary/20" />
         <StatCard label="Gross Profit" value={isLoading ? "—" : fmtCompact(grossProfit)} rawValue={isLoading ? undefined : grossProfit} sub={`Fuel margin earned`} icon={TrendingUp} colorClass="text-teal-400 bg-teal-500/10 border-teal-500/20" />
         <StatCard label="Expenses" value={isLoading ? "—" : fmtCompact(totalExpenses)} rawValue={isLoading ? undefined : totalExpenses} sub="Operating costs" icon={Package} trend={totalExpenses > grossProfit * 0.5 ? "down" : undefined} colorClass="text-red-400 bg-red-500/10 border-red-500/20" />
@@ -671,7 +671,7 @@ export default function Dashboard() {
                 <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-2 flex items-center gap-1">
                   <FlaskConical className="w-3 h-3" /> Lubricants
                 </p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {allProducts.filter((p: any) => p.category === 'lubricant').map((product: any) => (
                     <DashStockCard key={product.id} product={product} compact />
                   ))}

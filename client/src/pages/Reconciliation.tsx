@@ -225,7 +225,7 @@ export default function Reconciliation() {
                   </div>
 
                   {/* Collection breakdown per session */}
-                  <div className="grid grid-cols-4 gap-2 pt-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                     {[
                       { label: "Cash", value: session.totalCash, color: "text-green-400" },
                       { label: "Card", value: session.totalCard, color: "text-blue-400" },

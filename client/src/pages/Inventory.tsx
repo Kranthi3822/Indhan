@@ -256,7 +256,7 @@ export default function Inventory() {
                     <SelectContent>{products?.map((p: any) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Quantity</Label>
                     <Input placeholder="5000" className="bg-secondary border-border/50 h-8 text-sm" value={poForm.quantityOrdered} onChange={e => setPoForm(f => ({ ...f, quantityOrdered: e.target.value }))} />
@@ -291,8 +291,8 @@ export default function Inventory() {
             <DialogContent className="bg-card border-border/50">
               <DialogHeader><DialogTitle>Add Product</DialogTitle></DialogHeader>
               <div className="space-y-4 pt-2">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5 col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5 col-span-2 sm:col-span-2">
                     <Label className="text-xs">Name</Label>
                     <Input placeholder="e.g. Petrol" className="bg-secondary border-border/50 h-8 text-sm" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                   </div>

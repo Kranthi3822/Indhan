@@ -156,7 +156,7 @@ export default function Expenses() {
           <DialogContent className="bg-card border-border/50 max-w-md">
             <DialogHeader><DialogTitle>Record Expense</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Date</Label>
                   <Input type="date" className="bg-secondary border-border/50 h-8 text-sm" value={form.expenseDate} onChange={e => setForm(f => ({ ...f, expenseDate: e.target.value }))} />
@@ -213,7 +213,7 @@ export default function Expenses() {
                     <Label className="text-xs text-orange-400 font-semibold flex items-center gap-1">
                       <Fuel className="w-3 h-3" /> Select Nozzle <span className="text-red-400">*</span>
                     </Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {(nozzles ?? []).map((n: any) => (
                         <button
                           key={n.id}
@@ -260,7 +260,7 @@ export default function Expenses() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card className="bg-card border-border/50">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">

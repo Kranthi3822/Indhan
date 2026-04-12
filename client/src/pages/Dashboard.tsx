@@ -36,7 +36,9 @@ function DashCircleGauge({ pct, color, size = 64 }: { pct: number; color: string
 function DashStockCard({ product, compact = false }: { product: any; compact?: boolean }) {
   const current = Number(product.currentStock ?? 0);
   const min = Number(product.reorderLevel ?? 0);
-  const max = Number(product.maxStockLevel ?? (product.category === 'fuel' ? 20000 : 200));
+  const rawMax = Number(product.maxStockLevel ?? 0);
+  const fallbackMax = product.category === 'fuel' ? 20000 : Math.max(200, min * 5, current * 1.5);
+  const max = rawMax > 0 ? rawMax : fallbackMax;
   const pct = max > 0 ? Math.min(100, Math.max(0, (current / max) * 100)) : 0;
   const isCritical = current <= min;
   const isLow = !isCritical && pct < 35;
@@ -209,14 +211,45 @@ export default function Dashboard() {
   const totalPurchaseLubricantsQty = Number(kpis?.totalPurchaseLubricantsQty ?? 0);
   const totalPurchase = Number(kpis?.totalPurchase ?? 0);
 
+  // Low-stock items: products below their reorderLevel
+  const lowStockItems = useMemo(() => {
+    if (!allProducts) return [];
+    return (allProducts as any[]).filter((p: any) => {
+      const stock = Number(p.currentStock ?? 0);
+      const min = Number(p.reorderLevel ?? 0);
+      return stock < min;
+    });
+  }, [allProducts]);
+
   return (
     <div className="space-y-6">
+      {/* Real-time low-stock alert banner */}
+      {lowStockItems.length > 0 && (
+        <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-400 mb-1.5">
+              {lowStockItems.length} product{lowStockItems.length > 1 ? 's' : ''} below minimum stock level
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {lowStockItems.map((p: any) => (
+                <span key={p.id} className="inline-flex items-center gap-1 text-xs bg-red-500/15 border border-red-500/25 text-red-300 rounded-full px-2.5 py-0.5">
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-red-400/60">·</span>
+                  <span>{Number(p.currentStock ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })} / {Number(p.reorderLevel ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })} {p.unit}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+          <a href="/inventory" className="text-xs text-red-400 hover:text-red-300 underline underline-offset-2 shrink-0 mt-0.5 whitespace-nowrap">View Inventory →</a>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Good morning, Kranthi</h2>
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm text-muted-foreground">{format(new Date(latestDataDate + 'T00:00:00'), "EEEE, d MMMM yyyy")} · {STATION_SHORT_NAME}</p>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">Data: Apr 2025 – Mar 2026</span>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Data: Apr 2025 – Mar 2026</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">

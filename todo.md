@@ -491,3 +491,8 @@
 - [x] Update primary button colour to amber
 - [x] Update chart colours to amber/gold/orange palette
 - [x] Update scrollbar colours to match amber theme
+
+## Inventory & Dashboard Feature Sprint
+- [ ] Dashboard: real-time low-stock alert banner at top (shows products below reorderLevel with name, current qty, min qty, link to Inventory)
+- [ ] Inventory: search bar to filter products by name in real-time
+- [ ] Inventory: grid/list view toggle (grid = current gauge cards, list = compact table rows)

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, ShoppingCart, AlertTriangle, Droplets, Package, CheckCircle, Clock, Truck } from "lucide-react";
+import { Plus, ShoppingCart, AlertTriangle, Droplets, Package, CheckCircle, Clock, Truck, Search, LayoutGrid, List } from "lucide-react";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -34,8 +34,12 @@ function CircleGauge({ pct, color, size = 80 }: { pct: number; color: string; si
 function StockGaugeCard({ product }: { product: any }) {
   const current = Number(product.currentStock ?? 0);
   const min = Number(product.reorderLevel ?? 0);
-  const max = Number(product.maxStockLevel ?? 10000);
-  const pct = max > min ? Math.min(100, Math.max(0, ((current - min) / (max - min)) * 100)) : 0;
+  // Use maxStockLevel if set, otherwise derive a sensible max:
+  // fuel: 20,000L tank capacity; lubricants/other: 5× reorder level or 200L minimum
+  const rawMax = Number(product.maxStockLevel ?? 0);
+  const fallbackMax = product.category === 'fuel' ? 20000 : Math.max(200, min * 5, current * 1.5);
+  const max = rawMax > 0 ? rawMax : fallbackMax;
+  const pct = max > 0 ? Math.min(100, Math.max(0, (current / max) * 100)) : 0;
   const isCritical = pct < 15;
   const isLow = pct < 35;
   const color = isCritical ? "#ef4444" : isLow ? "#17897e" : "#22c55e";
@@ -66,6 +70,45 @@ function StockGaugeCard({ product }: { product: any }) {
   );
 }
 
+// List view row component
+function StockListRow({ product }: { product: any }) {
+  const current = Number(product.currentStock ?? 0);
+  const min = Number(product.reorderLevel ?? 0);
+  const max = Number(product.maxStockLevel ?? (product.category === 'fuel' ? 20000 : 200));
+  const pct = max > 0 ? Math.min(100, Math.max(0, (current / max) * 100)) : 0;
+  const isCritical = current < min;
+  const isLow = !isCritical && pct < 35;
+  const color = isCritical ? "text-red-400" : isLow ? "text-amber-400" : "text-green-400";
+  const statusText = isCritical ? "Critical" : isLow ? "Low" : "Good";
+  const statusBg = isCritical ? "bg-red-500/10 text-red-400 border-red-500/20" : isLow ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-green-500/10 text-green-400 border-green-500/20";
+  return (
+    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border/40 bg-card/50 hover:bg-card transition-colors">
+      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+        <Package className="w-4 h-4 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold truncate">{product.name}</p>
+        <p className="text-[10px] text-muted-foreground capitalize">{product.category}</p>
+      </div>
+      <div className="text-right shrink-0">
+        <p className={`text-sm font-bold tabular-nums ${color}`}>{current.toLocaleString('en-IN')}</p>
+        <p className="text-[10px] text-muted-foreground">{product.unit}</p>
+      </div>
+      <div className="w-20 shrink-0">
+        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: isCritical ? '#ef4444' : isLow ? '#f59e0b' : '#22c55e' }} />
+        </div>
+        <p className="text-[9px] text-muted-foreground mt-0.5 text-right">{Math.round(pct)}%</p>
+      </div>
+      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full border shrink-0 ${statusBg}`}>{statusText}</span>
+      <div className="text-right shrink-0 hidden sm:block">
+        <p className="text-xs font-medium">Min {min.toLocaleString('en-IN')}</p>
+        <p className="text-[10px] text-muted-foreground">₹{Number(product.sellingPrice).toLocaleString('en-IN')}/{product.unit}</p>
+      </div>
+    </div>
+  );
+}
+
 const PO_STATUS_META: Record<string, { icon: any; color: string; bg: string }> = {
   delivered: { icon: CheckCircle, color: "text-green-400", bg: "bg-green-500/10" },
   ordered:   { icon: Truck,       color: "text-blue-400",  bg: "bg-blue-500/10"  },
@@ -77,6 +120,8 @@ export default function Inventory() {
   const [poOpen, setPoOpen] = useState(false);
   const [form, setForm] = useState({ name: "", category: "fuel", unit: "L", currentStock: "", minStockLevel: "", maxStockLevel: "", costPrice: "", sellingPrice: "" });
   const [poForm, setPoForm] = useState({ productId: "", quantityOrdered: "", unitPrice: "", notes: "" });
+  const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const { data: products, refetch } = trpc.inventory.list.useQuery();
   const { data: lowStock } = trpc.inventory.lowStock.useQuery();
@@ -92,24 +137,57 @@ export default function Inventory() {
     onError: (e) => toast.error(e.message),
   });
 
-  const fuelProducts = products?.filter((p: any) => p.category === "fuel") ?? [];
-  const lubricants = products?.filter((p: any) => p.category === "lubricant") ?? [];
-  const others = products?.filter((p: any) => p.category === "other") ?? [];
+  const q = search.toLowerCase().trim();
+  const filteredProducts = products?.filter((p: any) => !q || p.name.toLowerCase().includes(q)) ?? [];
+  const fuelProducts = filteredProducts.filter((p: any) => p.category === "fuel");
+  const lubricants = filteredProducts.filter((p: any) => p.category === "lubricant");
+  const others = filteredProducts.filter((p: any) => p.category === "other");
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {/* Search bar */}
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Search products..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-8 h-8 text-sm bg-secondary border-border/50"
+          />
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
           {lowStock && lowStock.length > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
               <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
               <span className="text-xs font-semibold text-red-400">{lowStock.length} low stock</span>
             </div>
           )}
-          <span className="text-xs text-muted-foreground">{products?.length ?? 0} products</span>
+          <span className="text-xs text-muted-foreground">{filteredProducts.length} products</span>
+          {/* Grid / List toggle */}
+          <div className="flex items-center rounded-lg border border-border/50 overflow-hidden">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 transition-colors ${
+                viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+              title="Grid view"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 transition-colors ${
+                viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+              title="List view"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <Dialog open={poOpen} onOpenChange={setPoOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
@@ -208,16 +286,22 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Fuel Products — large gauge cards */}
+      {/* Fuel Products */}
       {fuelProducts.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Droplets className="w-4 h-4 text-teal-400" />
+            <Droplets className="w-4 h-4 text-primary" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fuel</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {fuelProducts.map((p: any) => <StockGaugeCard key={p.id} product={p} />)}
-          </div>
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {fuelProducts.map((p: any) => <StockGaugeCard key={p.id} product={p} />)}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {fuelProducts.map((p: any) => <StockListRow key={p.id} product={p} />)}
+            </div>
+          )}
         </div>
       )}
 
@@ -228,9 +312,15 @@ export default function Inventory() {
             <Package className="w-4 h-4 text-green-400" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Lubricants</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {lubricants.map((p: any) => <StockGaugeCard key={p.id} product={p} />)}
-          </div>
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {lubricants.map((p: any) => <StockGaugeCard key={p.id} product={p} />)}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {lubricants.map((p: any) => <StockListRow key={p.id} product={p} />)}
+            </div>
+          )}
         </div>
       )}
 
@@ -241,9 +331,15 @@ export default function Inventory() {
             <Package className="w-4 h-4 text-blue-400" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Other</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {others.map((p: any) => <StockGaugeCard key={p.id} product={p} />)}
-          </div>
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {others.map((p: any) => <StockGaugeCard key={p.id} product={p} />)}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {others.map((p: any) => <StockListRow key={p.id} product={p} />)}
+            </div>
+          )}
         </div>
       )}
 

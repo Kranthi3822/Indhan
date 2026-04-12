@@ -282,7 +282,25 @@ export async function getLowStockProducts() {
 export async function getPurchaseOrders(limit = 50) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(purchaseOrders).orderBy(desc(purchaseOrders.orderDate)).limit(limit);
+  return db
+    .select({
+      id: purchaseOrders.id,
+      productId: purchaseOrders.productId,
+      productName: products.name,
+      supplier: purchaseOrders.supplier,
+      orderDate: purchaseOrders.orderDate,
+      quantityOrdered: purchaseOrders.quantityOrdered,
+      quantityReceived: purchaseOrders.quantityReceived,
+      unitPrice: purchaseOrders.unitPrice,
+      totalAmount: purchaseOrders.totalAmount,
+      status: purchaseOrders.status,
+      notes: purchaseOrders.notes,
+      createdAt: purchaseOrders.createdAt,
+    })
+    .from(purchaseOrders)
+    .leftJoin(products, eq(purchaseOrders.productId, products.id))
+    .orderBy(desc(purchaseOrders.orderDate))
+    .limit(limit);
 }
 
 export async function createPurchaseOrder(data: InsertPurchaseOrder) {

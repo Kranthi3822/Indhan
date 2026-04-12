@@ -8,7 +8,7 @@ import {
   getDashboardKPIs, getDailyTrend, getDailyTrendByRange,
   getAllCustomers, getCustomerById, createCustomer, updateCustomer, getCustomerReceivables, recordCustomerPayment,
   getAllProducts, createProduct, updateProductStock, updateProduct, getLowStockProducts,
-  getPurchaseOrders, createPurchaseOrder, updatePurchaseOrderStatus,
+  getPurchaseOrders, createPurchaseOrder, updatePurchaseOrderStatus, getDailyStockStatement,
   getExpenses, createExpense, updateExpenseApproval, getExpenseSummaryByCategory,
   getBankTransactions, createBankTransaction, updateBankReconciliation, getBankSummary,
   getWeighBridgeRecords, createWeighBridgeRecord, getWeighBridgeSummary,
@@ -172,6 +172,13 @@ const inventoryRouter = router({
   })).mutation(async ({ input }) => {
     await updatePurchaseOrderStatus(input.id, input.status, input.quantityReceived);
     return { success: true };
+  }),
+  dailyStockStatement: protectedProcedure.input(z.object({
+    fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    days: z.number().min(1).max(90).default(30),
+  })).query(async ({ input }) => {
+    return getDailyStockStatement(input.fromDate, input.toDate, input.days);
   }),
 });
 

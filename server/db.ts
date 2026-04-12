@@ -12,6 +12,7 @@ import {
   purchaseOrders, InsertPurchaseOrder,
   customerPayments, InsertCustomerPayment,
   fuelConfig,
+  dipReadings,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -527,4 +528,121 @@ export async function createSalesTransaction(data: InsertSalesTransaction) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.insert(salesTransactions).values(data);
+}
+
+// ─── Daily Stock Statement ────────────────────────────────────────────────────
+// Standard fuel station SOP: Opening Stock + Receipts − Meter Sales = Calculated Closing Stock
+// Dip Reading is recorded separately as a cross-check; variance = Dip − Calculated
+export async function getDailyStockStatement(fromDate?: string, toDate?: string, days = 30) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Determine date range
+  let endDate = toDate ?? "2026-03-31";
+  let startDate = fromDate;
+  if (!startDate) {
+    // Go back `days` from endDate
+    const end = new Date(endDate);
+    const start = new Date(end);
+    start.setDate(start.getDate() - days + 1);
+    startDate = start.toISOString().slice(0, 10);
+  }
+
+  // 1. Get daily_reports rows (has opening, closing, sales qty per fuel type)
+  const reportRows = await db.select({
+    reportDate: dailyReports.reportDate,
+    openingStockPetrol: dailyReports.openingStockPetrol,
+    openingStockDiesel: dailyReports.openingStockDiesel,
+    petrolSalesQty: dailyReports.petrolSalesQty,
+    dieselSalesQty: dailyReports.dieselSalesQty,
+    closingStockPetrol: dailyReports.closingStockPetrol,
+    closingStockDiesel: dailyReports.closingStockDiesel,
+  }).from(dailyReports).where(
+    sql`${dailyReports.reportDate} >= ${startDate} AND ${dailyReports.reportDate} <= ${endDate}`
+  ).orderBy(desc(dailyReports.reportDate));
+
+  // 2. Get purchase orders (receipts) in the same period, grouped by date and product
+  const poRows = await db.select({
+    orderDate: purchaseOrders.orderDate,
+    productId: purchaseOrders.productId,
+    received: sql<number>`COALESCE(SUM(${purchaseOrders.quantityReceived}), 0)`,
+  }).from(purchaseOrders).where(
+    sql`${purchaseOrders.status} = 'delivered' AND ${purchaseOrders.orderDate} >= ${startDate} AND ${purchaseOrders.orderDate} <= ${endDate}`
+  ).groupBy(purchaseOrders.orderDate, purchaseOrders.productId);
+
+  // 3. Get dip readings in the same period
+  const dipRows = await db.select({
+    readingDate: dipReadings.readingDate,
+    fuelType: dipReadings.fuelType,
+    dipLitres: dipReadings.dipLitres,
+  }).from(dipReadings).where(
+    sql`${dipReadings.readingDate} >= ${startDate} AND ${dipReadings.readingDate} <= ${endDate}`
+  ).orderBy(desc(dipReadings.readingDate));
+
+  // Build lookup maps
+  const poByDate: Record<string, { petrol: number; diesel: number }> = {};
+  for (const po of poRows) {
+    const d = String(po.orderDate).slice(0, 10);
+    if (!poByDate[d]) poByDate[d] = { petrol: 0, diesel: 0 };
+    if (po.productId === 1) poByDate[d].petrol += Number(po.received);
+    if (po.productId === 2) poByDate[d].diesel += Number(po.received);
+  }
+
+  const dipByDate: Record<string, { petrol: number | null; diesel: number | null }> = {};
+  for (const dip of dipRows) {
+    const d = String(dip.readingDate).slice(0, 10);
+    if (!dipByDate[d]) dipByDate[d] = { petrol: null, diesel: null };
+    if (dip.fuelType === "petrol") dipByDate[d].petrol = Number(dip.dipLitres);
+    if (dip.fuelType === "diesel") dipByDate[d].diesel = Number(dip.dipLitres);
+  }
+
+  // Build result rows
+  return reportRows.map(r => {
+    const date = String(r.reportDate).slice(0, 10);
+    const poReceipts = poByDate[date] ?? { petrol: 0, diesel: 0 };
+    const dip = dipByDate[date] ?? { petrol: null, diesel: null };
+
+    const openP = Number(r.openingStockPetrol ?? 0);
+    const openD = Number(r.openingStockDiesel ?? 0);
+    const salesP = Number(r.petrolSalesQty ?? 0);
+    const salesD = Number(r.dieselSalesQty ?? 0);
+    // Reported closing is the authoritative figure (recorded by operator / imported from Excel)
+    const reportedCloseP = Number(r.closingStockPetrol ?? 0);
+    const reportedCloseD = Number(r.closingStockDiesel ?? 0);
+
+    // Implied receipts = Reported Closing − Opening + Meter Sales
+    // This back-calculates what tanker deliveries must have occurred to reconcile the stock
+    const impliedReceiptsP = Math.max(0, reportedCloseP - openP + salesP);
+    const impliedReceiptsD = Math.max(0, reportedCloseD - openD + salesD);
+
+    // PO receipts are separately recorded; use as cross-check
+    const poReceiptsP = poReceipts.petrol;
+    const poReceiptsD = poReceipts.diesel;
+
+    // Variance: Dip Reading − Reported Closing (positive = gain, negative = loss)
+    const dipVarP = dip.petrol !== null ? dip.petrol - reportedCloseP : null;
+    const dipVarD = dip.diesel !== null ? dip.diesel - reportedCloseD : null;
+
+    return {
+      date,
+      petrol: {
+        openingStock: openP,
+        meterSales: salesP,
+        impliedReceipts: impliedReceiptsP,
+        poReceipts: poReceiptsP,
+        reportedClosing: reportedCloseP,
+        dipReading: dip.petrol,
+        dipVariance: dipVarP,
+      },
+      diesel: {
+        openingStock: openD,
+        meterSales: salesD,
+        impliedReceipts: impliedReceiptsD,
+        poReceipts: poReceiptsD,
+        reportedClosing: reportedCloseD,
+        dipReading: dip.diesel,
+        dipVariance: dipVarD,
+      },
+    };
+  });
 }

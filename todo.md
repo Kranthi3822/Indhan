@@ -447,3 +447,23 @@
 - [x] Employees.tsx Staff Directory now fetches from trpc.hr.listEmployees (live DB) instead of hardcoded mockEmployees array
 - [x] Add Employee button now wired to trpc.hr.createEmployee mutation (was a no-op toast)
 - [x] Summary cards (Active Employees, Monthly Payroll) now show live DB values
+
+## Daily Stock Statement & Inventory Fixes
+- [ ] Fix Diesel (HSD) showing 0 litres in Inventory — investigate why stock is not computed
+- [ ] Set realistic minimum stock levels: Diesel 5000L, Petrol 3000L, lubricants 20L each
+- [ ] Build proper Daily Stock Statement following fuel station SOP: Opening Stock + Receipts − Meter Sales = Closing Stock
+- [ ] Add dip reading as cross-check column (Dip Reading vs Calculated Closing Stock, show variance)
+- [ ] Fix "Min: liter" display bug in Inventory Alerts (unit label missing value)
+- [ ] Ensure both petrol and diesel appear in the Daily Stock Statement with correct figures
+- [ ] Compute stock from meter readings (nozzle session cumulative sales) not just dip readings
+
+## Daily Stock Statement & Inventory Fixes
+- [x] Fix Diesel stock showing 0 in Inventory — updated products.currentStock to 6,823.32 L from daily_reports.closingStockDiesel
+- [x] Fix "Min: liter" bug in Inventory — Inventory.tsx was reading product.minStockLevel (non-existent field), fixed to use product.reorderLevel
+- [x] Set minimum stock levels: Diesel 5,000 L, Petrol 3,000 L, Lubricants 20 L each (updated in DB via products.reorderLevel)
+- [x] Build Daily Stock Statement page (/daily-stock) — standard SOP format: Opening − Sales + Receipts = Closing, with dip variance column
+- [x] getDailyStockStatement backend procedure: uses reportedClosing from daily_reports as authoritative, back-calculates implied receipts
+- [x] Add "Daily Stock" to sidebar navigation (Operations group, FlaskConical icon)
+- [x] Summary strip: Petrol Sales, Diesel Sales, Implied Receipts (Petrol), Implied Receipts (Diesel) for selected period
+- [x] Period presets: Last 7/14/30 Days + custom date range picker
+- [x] Dip variance column shows "No dip" when no dip reading recorded (with amber warning banner)

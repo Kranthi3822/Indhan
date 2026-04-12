@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Reconciliation from "./pages/Reconciliation";
 import Sales from "./pages/Sales";
 import Inventory from "./pages/Inventory";
+import DailyStockStatement from "./pages/DailyStockStatement";
 import Customers from "./pages/Customers";
 import Expenses from "./pages/Expenses";
 import BankStatement from "./pages/BankStatement";
@@ -36,6 +37,7 @@ function Router() {
         <Route path="/reconciliation" component={Reconciliation} />
         <Route path="/sales" component={Sales} />
         <Route path="/inventory" component={Inventory} />
+        <Route path="/daily-stock" component={DailyStockStatement} />
         <Route path="/customers" component={Customers} />
         <Route path="/expenses" component={Expenses} />
         <Route path="/bank" component={BankStatement} />

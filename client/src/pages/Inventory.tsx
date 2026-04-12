@@ -33,7 +33,7 @@ function CircleGauge({ pct, color, size = 80 }: { pct: number; color: string; si
 
 function StockGaugeCard({ product }: { product: any }) {
   const current = Number(product.currentStock ?? 0);
-  const min = Number(product.minStockLevel ?? 0);
+  const min = Number(product.reorderLevel ?? 0);
   const max = Number(product.maxStockLevel ?? 10000);
   const pct = max > min ? Math.min(100, Math.max(0, ((current - min) / (max - min)) * 100)) : 0;
   const isCritical = pct < 15;

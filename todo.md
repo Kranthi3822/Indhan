@@ -394,3 +394,8 @@
 ## Tests
 - [x] Added dailyActivity.test.ts: 6 tests covering aggregation logic, empty state, session counting, autoPopulateDailyReport
 - [x] All 254 tests passing
+
+## Daily Sales Register — Petrol/Diesel Sales Amount Columns
+- [x] Add petrolSalesAmount and dieselSalesAmount to getDailyTrend and getDailyTrendByRange in db.ts (computed from fuel_config retail prices)
+- [x] Update sales.list tRPC response to include petrolSalesAmount and dieselSalesAmount
+- [x] Add Petrol (₹) and Diesel (₹) columns to Daily Sales Register table in Sales.tsx

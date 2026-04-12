@@ -339,7 +339,7 @@ export default function Sales() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border/30">
-                  {["Date", "Petrol (L)", "Diesel (L)", "Total Sales", "Cash", "Card", "Credit", "Online", "Status"].map(h => (
+                  {["Date", "Petrol (L)", "Petrol (₹)", "Diesel (L)", "Diesel (₹)", "Total Sales", "Cash", "Card", "Credit", "Online", "Status"].map(h => (
                     <th key={h} className="text-left px-4 py-2.5 text-muted-foreground font-medium whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -357,7 +357,13 @@ export default function Sales() {
                     <tr key={i} className="border-b border-border/20 hover:bg-muted/30 transition-colors group">
                       <td className="px-4 py-2.5 font-medium whitespace-nowrap">{date}</td>
                       <td className="px-4 py-2.5 tabular-nums text-green-400">{Number(r.petrolSalesQty ?? 0).toFixed(2)}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-green-300 font-medium">
+                        <span title={fmtFull(Number(r.petrolSalesAmount ?? 0))}>{fmtCompact(Number(r.petrolSalesAmount ?? 0))}</span>
+                      </td>
                       <td className="px-4 py-2.5 tabular-nums text-blue-400">{Number(r.dieselSalesQty ?? 0).toFixed(2)}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-blue-300 font-medium">
+                        <span title={fmtFull(Number(r.dieselSalesAmount ?? 0))}>{fmtCompact(Number(r.dieselSalesAmount ?? 0))}</span>
+                      </td>
                       {/* Total Sales: compact + hover full */}
                       <td className="px-4 py-2.5 tabular-nums font-semibold">
                         <span title={fmtFull(totalSalesVal)}>{fmtCompact(totalSalesVal)}</span>
@@ -387,7 +393,7 @@ export default function Sales() {
                   );
                 }) : (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
                       No data for selected period
                     </td>
                   </tr>

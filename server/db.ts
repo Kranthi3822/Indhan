@@ -11,6 +11,7 @@ import {
   dailyReports, InsertDailyReport,
   purchaseOrders, InsertPurchaseOrder,
   customerPayments, InsertCustomerPayment,
+  fuelConfig,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -143,9 +144,23 @@ export async function getDashboardKPIs(startDate: string, endDate: string) {
   };
 }
 
+async function getFuelPrices(db: ReturnType<typeof drizzle>) {
+  const configs = await db.select({
+    fuelType: fuelConfig.fuelType,
+    retailPrice: fuelConfig.retailPrice,
+  }).from(fuelConfig);
+  const petrolCfg = configs.find(c => c.fuelType === 'petrol');
+  const dieselCfg = configs.find(c => c.fuelType === 'diesel');
+  return {
+    petrolPrice: petrolCfg ? Number(petrolCfg.retailPrice) : 108.83,
+    dieselPrice: dieselCfg ? Number(dieselCfg.retailPrice) : 97.10,
+  };
+}
+
 export async function getDailyTrend(days: number) {
   const db = await getDb();
   if (!db) return [];
+  const { petrolPrice, dieselPrice } = await getFuelPrices(db);
   const rows = await db.select({
     reportDate: dailyReports.reportDate,
     totalSalesValue: dailyReports.totalSalesValue,
@@ -163,6 +178,8 @@ export async function getDailyTrend(days: number) {
   return rows.map(r => ({
     ...r,
     reportDate: r.reportDate ? String(r.reportDate).slice(0, 10) : null,
+    petrolSalesAmount: Number(r.petrolSalesQty ?? 0) * petrolPrice,
+    dieselSalesAmount: Number(r.dieselSalesQty ?? 0) * dieselPrice,
   }));
 }
 
@@ -170,6 +187,7 @@ export async function getDailyTrend(days: number) {
 export async function getDailyTrendByRange(startDate: string, endDate: string) {
   const db = await getDb();
   if (!db) return [];
+  const { petrolPrice, dieselPrice } = await getFuelPrices(db);
   const rows = await db.select({
     reportDate: dailyReports.reportDate,
     totalSalesValue: dailyReports.totalSalesValue,
@@ -188,6 +206,8 @@ export async function getDailyTrendByRange(startDate: string, endDate: string) {
   return rows.map(r => ({
     ...r,
     reportDate: r.reportDate ? String(r.reportDate).slice(0, 10) : null,
+    petrolSalesAmount: Number(r.petrolSalesQty ?? 0) * petrolPrice,
+    dieselSalesAmount: Number(r.dieselSalesQty ?? 0) * dieselPrice,
   }));
 }
 

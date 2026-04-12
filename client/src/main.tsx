@@ -4,9 +4,29 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
+import { useState, useCallback } from "react";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { SplashScreen } from "./components/SplashScreen";
 import "./index.css";
+
+// Only show splash once per browser session (not on every hot-reload)
+const SPLASH_KEY = "indhan_splash_shown";
+const splashAlreadyShown = typeof sessionStorage !== "undefined" && sessionStorage.getItem(SPLASH_KEY) === "1";
+
+function Root() {
+  const [showSplash, setShowSplash] = useState(!splashAlreadyShown);
+  const handleDismiss = useCallback(() => {
+    sessionStorage.setItem(SPLASH_KEY, "1");
+    setShowSplash(false);
+  }, []);
+  return (
+    <>
+      {showSplash && <SplashScreen onDismiss={handleDismiss} />}
+      <App />
+    </>
+  );
+}
 
 const queryClient = new QueryClient();
 
@@ -55,7 +75,7 @@ const trpcClient = trpc.createClient({
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <Root />
     </QueryClientProvider>
   </trpc.Provider>
 );

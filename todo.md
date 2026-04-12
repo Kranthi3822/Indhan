@@ -510,3 +510,12 @@
 - [x] Header height: h-14 on mobile, h-16 on desktop
 - [ ] Publish app to production URL then test install prompt on Android Chrome
 - [ ] Verify iOS "Add to Home Screen" works on published URL
+
+## PWA Feature Sprint 2
+- [x] Push notifications: alert owner when any product drops below reorderLevel (use notifyOwner + browser Notification API)
+- [x] Push notifications: Bell icon in header turns amber when enabled; clicking links to /inventory
+- [x] PWA splash screen: full-screen amber loading animation shown on first app launch (Indhan logo + animated fuel gauge)
+- [x] PWA splash screen: auto-dismiss after 2s or when app is ready; shown once per session via sessionStorage
+- [x] Barcode/QR scanner: camera-based scanner in Inventory page (BarcodeScanner.tsx using html5-qrcode)
+- [x] Barcode/QR scanner: scan product barcode → sets search query to scanned code, shows matching products
+- [x] Barcode/QR scanner: fallback error state with retry button if camera not available

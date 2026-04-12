@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, ShoppingCart, AlertTriangle, Droplets, Package, CheckCircle, Clock, Truck, Search, LayoutGrid, List } from "lucide-react";
+import { Plus, ShoppingCart, AlertTriangle, Droplets, Package, CheckCircle, Clock, Truck, Search, LayoutGrid, List, ScanLine } from "lucide-react";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -122,6 +123,13 @@ export default function Inventory() {
   const [poForm, setPoForm] = useState({ productId: "", quantityOrdered: "", unitPrice: "", notes: "" });
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  const handleScan = (code: string) => {
+    setScannerOpen(false);
+    setSearch(code);
+    toast.success(`Scanned: ${code}`, { description: "Showing matching products below" });
+  };
 
   const { data: products, refetch } = trpc.inventory.list.useQuery();
   const { data: lowStock } = trpc.inventory.lowStock.useQuery();
@@ -145,6 +153,8 @@ export default function Inventory() {
 
   return (
     <div className="space-y-5">
+      {/* Barcode Scanner Modal */}
+      {scannerOpen && <BarcodeScanner onScan={handleScan} onClose={() => setScannerOpen(false)} />}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {/* Search bar */}
@@ -188,6 +198,15 @@ export default function Inventory() {
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 text-xs border-primary/30 text-primary hover:bg-primary/10"
+            onClick={() => setScannerOpen(true)}
+            title="Scan barcode or QR code"
+          >
+            <ScanLine className="w-3.5 h-3.5" /> Scan
+          </Button>
           <Dialog open={poOpen} onOpenChange={setPoOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">

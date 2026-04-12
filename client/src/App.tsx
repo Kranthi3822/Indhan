@@ -1,8 +1,10 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch } from "wouter";
+import { useState, useCallback } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { SplashScreen } from "./components/SplashScreen";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Reconciliation from "./pages/Reconciliation";
@@ -62,12 +64,27 @@ function Router() {
   );
 }
 
+// Show splash only on first visit per session (not on every navigation)
+const SPLASH_KEY = "indhan_splash_shown";
+
 export default function App() {
+  const [showSplash, setShowSplash] = useState(() => {
+    // Show splash only if not already shown in this session
+    if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(SPLASH_KEY)) return false;
+    return true;
+  });
+
+  const handleSplashDismiss = useCallback(() => {
+    sessionStorage.setItem(SPLASH_KEY, "1");
+    setShowSplash(false);
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark" switchable>
         <TooltipProvider>
           <Toaster />
+          {showSplash && <SplashScreen onDismiss={handleSplashDismiss} />}
           <Router />
         </TooltipProvider>
       </ThemeProvider>

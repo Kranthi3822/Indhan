@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
+import { useInventoryNotifications } from "@/hooks/useInventoryNotifications";
 import {
   LayoutDashboard, RefreshCw, Users, Package, Receipt,
   Landmark, TrendingUp, FileUp, Settings, LogOut,
@@ -72,6 +73,32 @@ const SIDEBAR_WIDTH_KEY = "indhan-sidebar-width";
 const DEFAULT_WIDTH = 252;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 320;
+
+function NotificationBell() {
+  const { requestPermission } = useInventoryNotifications();
+  const [perm, setPerm] = useState<NotificationPermission>(
+    typeof Notification !== "undefined" ? Notification.permission : "default"
+  );
+
+  const handleClick = async () => {
+    if (perm === "granted") return;
+    await requestPermission();
+    if (typeof Notification !== "undefined") setPerm(Notification.permission);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      title={perm === "granted" ? "Notifications enabled" : "Enable low-stock notifications"}
+      className="h-8 w-8 rounded-lg hover:bg-secondary/60 flex items-center justify-center relative"
+    >
+      <Bell className={`h-4 w-4 ${perm === "granted" ? "text-primary" : "text-muted-foreground"}`} />
+      {perm !== "granted" && (
+        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
+      )}
+    </button>
+  );
+}
 
 function ThemeToggleButton() {
   const { theme, toggleTheme } = useTheme();
@@ -295,10 +322,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
               Live
             </Badge>
             <ThemeToggleButton />
-            <button className="h-8 w-8 rounded-lg hover:bg-secondary/60 flex items-center justify-center relative">
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
-            </button>
+            <NotificationBell />
           </div>
         </header>
         <main className="flex-1 p-3 md:p-6 overflow-auto">{children}</main>

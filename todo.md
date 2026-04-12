@@ -440,3 +440,10 @@
 
 ## Top Outstanding Customers Bug
 - [x] Fix Top Outstanding Customers widget — now sorts by outstanding desc, uses correct 'outstanding' field, filters out ₹0 balances, shows top 5
+
+## Staff Directory Cleanup
+- [x] Delete all fake/seeded employees (Ravi Kumar, Suresh Babu, Lakshmi Devi, Venkat Rao, Prasad etc.) from DB
+- [x] Verify only 5 real employees remain: Mahesh, Ashok, Kiran, Parandhamulu, Anjaiah
+- [x] Employees.tsx Staff Directory now fetches from trpc.hr.listEmployees (live DB) instead of hardcoded mockEmployees array
+- [x] Add Employee button now wired to trpc.hr.createEmployee mutation (was a no-op toast)
+- [x] Summary cards (Active Employees, Monthly Payroll) now show live DB values

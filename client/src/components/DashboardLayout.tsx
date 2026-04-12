@@ -26,7 +26,7 @@ import {
   LayoutDashboard, RefreshCw, Users, Package, Receipt,
   Landmark, TrendingUp, FileUp, Settings, LogOut,
   PanelLeft, Fuel, UserCheck, ChevronRight, Bell, Sun, Moon, Info,
-  Wrench, IndianRupee, ScanFace, Gauge,
+  Wrench, IndianRupee, ScanFace, Gauge, Tag, ScanLine,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -41,6 +41,8 @@ const menuItems = [
   { icon: RefreshCw, label: "Reconciliation", path: "/reconciliation", group: "Operations" },
   { icon: Fuel, label: "Sales & Nozzles", path: "/sales", group: "Operations" },
   { icon: Gauge, label: "Nozzle Entry", path: "/nozzle-entry", group: "Operations" },
+  { icon: Tag, label: "Fuel Prices", path: "/fuel-prices", group: "Operations" },
+  { icon: ScanLine, label: "Receipt Scanner", path: "/receipt-scanner", group: "Operations" },
   { icon: Package, label: "Inventory", path: "/inventory", group: "Operations" },
   { icon: Users, label: "Customers & Credit", path: "/customers", group: "Finance" },
   { icon: Receipt, label: "Expenses", path: "/expenses", group: "Finance" },

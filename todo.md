@@ -268,3 +268,15 @@
 - [x] Dashboard: "Dip Readings Active" vs "Estimated Stock" badge based on data quality
 - [x] Dashboard: amber warning banner when no dip readings recorded
 - [x] 218 vitest tests passing (21 new fuel intelligence tests)
+
+## Daily Fuel Price Entry & Receipt Scanner
+- [x] DB: daily_fuel_prices table (date, fuel_type, retail_price, cost_price, recorded_by, source: manual|receipt_scan)
+- [x] DB: migrate and apply (seeded today's prices from products table)
+- [x] tRPC: saveDailyPrice, getDailyPrices, getLatestPrice procedures
+- [x] tRPC: uploadAndScanReceipt — accepts base64 image, uploads to S3, uses LLM vision to extract invoice data
+- [x] tRPC: confirmReceipt — creates purchase order, updates fuel_config cost price
+- [x] UI: Daily Price Entry page (/fuel-prices) — dual entry cards with live margin preview, price history table
+- [x] UI: Purchase Receipt Scanner page (/receipt-scanner) — 4-step flow: upload → scanning → review/edit → confirmed
+- [x] Fuel Intelligence: saveDailyPrice updates fuel_config + products table so margins are always current
+- [x] Add Fuel Prices and Receipt Scanner to sidebar nav under Operations
+- [x] Write vitest tests — 241 total tests passing (20 new fuel prices tests)

@@ -661,3 +661,50 @@ export const fuelConfig = mysqlTable("fuel_config", {
 });
 export type FuelConfig = typeof fuelConfig.$inferSelect;
 export type InsertFuelConfig = typeof fuelConfig.$inferInsert;
+
+// ─── Daily Fuel Prices ────────────────────────────────────────────────────────
+// Staff log the retail selling price and cost price each day.
+// These override the static products table in Fuel Intelligence calculations.
+export const dailyFuelPrices = mysqlTable("daily_fuel_prices", {
+  id: int("id").autoincrement().primaryKey(),
+  priceDate: varchar("price_date", { length: 10 }).notNull(),  // YYYY-MM-DD
+  fuelType: mysqlEnum("fuel_type", ["petrol", "diesel"]).notNull(),
+  retailPrice: decimal("retail_price", { precision: 10, scale: 2 }).notNull(),   // ₹/L selling price
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }),                 // ₹/L purchase cost (optional)
+  source: mysqlEnum("source", ["manual", "receipt_scan"]).default("manual").notNull(),
+  notes: text("notes"),
+  recordedBy: varchar("recorded_by", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DailyFuelPrice = typeof dailyFuelPrices.$inferSelect;
+export type InsertDailyFuelPrice = typeof dailyFuelPrices.$inferInsert;
+
+// ─── Scanned Purchase Receipts ────────────────────────────────────────────────
+// AI-extracted data from uploaded fuel purchase receipts (HPCL/BPCL/IOC invoices).
+// Confirmed receipts auto-create purchase orders.
+export const scannedReceipts = mysqlTable("scanned_receipts", {
+  id: int("id").autoincrement().primaryKey(),
+  imageUrl: text("image_url").notNull(),                          // S3 URL of uploaded receipt image
+  status: mysqlEnum("status", ["pending", "extracted", "confirmed", "failed"]).default("pending").notNull(),
+  // AI-extracted fields
+  supplierName: varchar("supplier_name", { length: 200 }),        // e.g. HPCL, BPCL, IOC
+  invoiceNumber: varchar("invoice_number", { length: 100 }),
+  invoiceDate: varchar("invoice_date", { length: 10 }),           // YYYY-MM-DD
+  fuelType: mysqlEnum("fuel_type", ["petrol", "diesel", "lubricant"]),
+  quantityLitres: decimal("quantity_litres", { precision: 12, scale: 3 }),  // KL × 1000
+  unitPrice: decimal("unit_price", { precision: 10, scale: 4 }),            // ₹/L
+  totalAmount: decimal("total_amount", { precision: 14, scale: 2 }),
+  taxAmount: decimal("tax_amount", { precision: 12, scale: 2 }),
+  rawExtractedJson: text("raw_extracted_json"),                   // full AI response for audit
+  confidenceScore: decimal("confidence_score", { precision: 4, scale: 2 }), // 0-100
+  // After confirmation
+  purchaseOrderId: int("purchase_order_id"),                      // FK to purchase_orders
+  confirmedBy: varchar("confirmed_by", { length: 100 }),
+  confirmedAt: timestamp("confirmedAt"),
+  uploadedBy: varchar("uploaded_by", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ScannedReceipt = typeof scannedReceipts.$inferSelect;
+export type InsertScannedReceipt = typeof scannedReceipts.$inferInsert;

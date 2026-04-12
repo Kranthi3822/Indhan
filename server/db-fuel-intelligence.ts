@@ -82,9 +82,21 @@ export async function getFuelIntelligence(
 ): Promise<FuelIntelligenceResult> {
   const db = await getDb();
 
-  // 1. Load fuel config (retail prices, evaporation rates, tank capacities)
+  // 1. Load fuel config (evaporation rates, tank capacities) + products table (actual prices)
   const configs = await db.select().from(fuelConfig);
   const configMap = Object.fromEntries(configs.map((c: typeof configs[0]) => [c.fuelType, c]));
+
+  // Also pull actual retail/purchase prices from products table as the authoritative source
+  const productPriceRows = await db.execute(sql`
+    SELECT name, purchasePrice, sellingPrice, margin
+    FROM products WHERE category = 'fuel'
+  `) as any;
+  const productPrices = (productPriceRows[0] as any[]).reduce((acc: any, r: any) => {
+    const name = String(r.name).toLowerCase();
+    if (name.includes('petrol')) acc.petrol = { retail: Number(r.sellingPrice), cost: Number(r.purchasePrice), margin: Number(r.margin) };
+    if (name.includes('diesel')) acc.diesel = { retail: Number(r.sellingPrice), cost: Number(r.purchasePrice), margin: Number(r.margin) };
+    return acc;
+  }, {} as Record<string, { retail: number; cost: number; margin: number }>);
 
   // 2. Weighted Average Cost Price from purchase orders (delivered only)
   //    WACP = SUM(qty × unitPrice) / SUM(qty) for all delivered POs in period
@@ -216,7 +228,8 @@ export async function getFuelIntelligence(
     petrolPurchase,
     petrolSales,
     latestPetrolDip,
-    evapByFuel.petrol ?? 0
+    evapByFuel.petrol ?? 0,
+    productPrices.petrol
   );
 
   const dieselData = buildFuelMarginData(
@@ -225,7 +238,8 @@ export async function getFuelIntelligence(
     dieselPurchase,
     dieselSales,
     latestDieselDip,
-    evapByFuel.diesel ?? 0
+    evapByFuel.diesel ?? 0,
+    productPrices.diesel
   );
 
   // Lubricant — simpler: use config prices only, no evaporation
@@ -273,10 +287,12 @@ function buildFuelMarginData(
   purchase: any,
   sales: any,
   latestDip: any,
-  evaporationLitres: number
+  evaporationLitres: number,
+  productPrice?: { retail: number; cost: number; margin: number }
 ): FuelMarginData {
-  const retailPrice = Number(cfg?.retailPrice ?? (fuelType === "petrol" ? 103.41 : 89.14));
-  const configCostPrice = Number(cfg?.latestCostPrice ?? (fuelType === "petrol" ? 99.46 : 86.65));
+  // Use products table prices as authoritative source; fall back to fuel_config, then hardcoded defaults
+  const retailPrice = productPrice?.retail ?? Number(cfg?.retailPrice ?? (fuelType === "petrol" ? 108.83 : 97.10));
+  const configCostPrice = productPrice?.cost ?? Number(cfg?.latestCostPrice ?? (fuelType === "petrol" ? 104.88 : 94.61));
   const evaporationRatePct = Number(cfg?.evaporationRatePct ?? 0.1);
   const tankCapacity = Number(cfg?.tankCapacityLitres ?? 20000);
 

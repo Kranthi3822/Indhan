@@ -313,6 +313,34 @@ export async function getLowStockProducts() {
   );
 }
 
+/**
+ * Syncs products.currentStock for Petrol (MS) and Diesel (HSD) from the
+ * closing stock values of the most-recently-saved daily_reports row.
+ * Called automatically after every reconciliation.upsert save.
+ */
+export async function syncFuelStockFromLatestReport(): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  // Get the latest report's closing stocks
+  const rows = await db.execute(sql`
+    SELECT closingStockPetrol, closingStockDiesel
+    FROM daily_reports
+    ORDER BY reportDate DESC
+    LIMIT 1
+  `) as any;
+  const row = (rows[0] as any[])[0];
+  if (!row) return;
+  const petrolStock = Number(row.closingStockPetrol ?? 0);
+  const dieselStock = Number(row.closingStockDiesel ?? 0);
+  // Only update if the value is non-zero (avoid overwriting with 0 from incomplete entries)
+  if (petrolStock > 0) {
+    await db.execute(sql`UPDATE products SET currentStock = ${String(petrolStock.toFixed(3))}, updatedAt = NOW() WHERE name = 'Petrol (MS)'`);
+  }
+  if (dieselStock > 0) {
+    await db.execute(sql`UPDATE products SET currentStock = ${String(dieselStock.toFixed(3))}, updatedAt = NOW() WHERE name = 'Diesel (HSD)'`);
+  }
+}
+
 // ─── Purchase Orders ──────────────────────────────────────────────────────────
 export async function getPurchaseOrders(limit = 50) {
   const db = await getDb();

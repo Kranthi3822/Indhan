@@ -12,7 +12,7 @@ import {
   getExpenses, createExpense, updateExpenseApproval, getExpenseSummaryByCategory,
   getBankTransactions, createBankTransaction, updateBankReconciliation, getBankSummary,
   getWeighBridgeRecords, createWeighBridgeRecord, getWeighBridgeSummary,
-  getDailyReports, getDailyReport, upsertDailyReport,
+  getDailyReports, getDailyReport, upsertDailyReport, syncFuelStockFromLatestReport,
   getPLReport,
   getSalesTransactions, createSalesTransaction,
 } from "./db";
@@ -320,6 +320,8 @@ const reconciliationRouter = router({
       ...Object.fromEntries(Object.entries(nums).map(([k, v]) => [k, String(v)])),
     };
     await upsertDailyReport(strData);
+    // Sync products.currentStock so Inventory page always shows the latest closing stock
+    await syncFuelStockFromLatestReport().catch(() => {/* non-fatal */});
     return { success: true };
   }),
 });

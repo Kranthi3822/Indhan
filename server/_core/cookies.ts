@@ -8,41 +8,39 @@ function isIpAddress(host: string) {
   return host.includes(":");
 }
 
-function isSecureRequest(req: Request) {
-  if (req.protocol === "https") return true;
-
-  const forwardedProto = req.headers["x-forwarded-proto"];
-  if (!forwardedProto) return false;
-
-  const protoList = Array.isArray(forwardedProto)
-    ? forwardedProto
-    : forwardedProto.split(",");
-
-  return protoList.some(proto => proto.trim().toLowerCase() === "https");
+function isLocalRequest(req: Request): boolean {
+  const hostname = req.hostname;
+  return (
+    LOCAL_HOSTS.has(hostname) ||
+    isIpAddress(hostname) ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1"
+  );
 }
 
 export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  // const hostname = req.hostname;
-  // const shouldSetDomain =
-  //   hostname &&
-  //   !LOCAL_HOSTS.has(hostname) &&
-  //   !isIpAddress(hostname) &&
-  //   hostname !== "127.0.0.1" &&
-  //   hostname !== "::1";
+  const isLocal = isLocalRequest(req);
 
-  // const domain =
-  //   shouldSetDomain && !hostname.startsWith(".")
-  //     ? `.${hostname}`
-  //     : shouldSetDomain
-  //       ? hostname
-  //       : undefined;
+  if (isLocal) {
+    // Local dev: SameSite=Lax works fine without Secure
+    return {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: false,
+    };
+  }
 
+  // Production: SameSite=None REQUIRES Secure=true per the browser spec.
+  // Browsers silently drop SameSite=None cookies that lack the Secure flag,
+  // which breaks the OAuth flow. The Manus proxy always terminates TLS,
+  // so it is always safe to force secure:true here.
   return {
     httpOnly: true,
     path: "/",
     sameSite: "none",
-    secure: isSecureRequest(req),
+    secure: true,
   };
 }

@@ -93,7 +93,6 @@ export default function NozzleEntry() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [openingReadings, setOpeningReadings] = useState<Record<number, string>>({});
   const [closingReadings, setClosingReadings] = useState<Record<number, string>>({});
-
   // Collection form state
   const [collAmount, setCollAmount] = useState("");
   const [collMode, setCollMode] = useState<"cash" | "digital" | "credit">("cash");

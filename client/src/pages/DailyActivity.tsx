@@ -77,11 +77,11 @@ export default function DailyActivity() {
   const hasData = report && report.sessionCount > 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h2 className="text-base font-bold tracking-tight flex items-center gap-2">
             <ClipboardList className="w-6 h-6 text-primary" />
             Daily Activity Report
           </h2>
@@ -218,7 +218,7 @@ export default function DailyActivity() {
               <CardContent className="px-4 pb-4">
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="text-center p-3 rounded-lg bg-secondary/40">
-                    <p className="text-2xl font-bold">{report.sessionCount}</p>
+                    <p className="text-xl font-bold tabular-nums">{report.sessionCount}</p>
                     <p className="text-[10px] text-muted-foreground">Total</p>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-green-500/10">

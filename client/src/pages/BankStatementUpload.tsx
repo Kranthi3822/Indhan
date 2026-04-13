@@ -230,14 +230,14 @@ export default function BankStatementUpload() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
           <Building2 className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-xl font-bold">Bank Statement Sync</h2>
+          <h2 className="text-base font-bold">Bank Statement Sync</h2>
           <p className="text-xs text-muted-foreground">Upload your bank statement to auto-reconcile daily reports</p>
         </div>
       </div>

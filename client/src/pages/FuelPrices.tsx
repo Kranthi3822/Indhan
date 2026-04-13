@@ -196,10 +196,10 @@ export default function FuelPrices() {
   const dieselTrend = getMarginTrend(latestDiesel?.margin ?? null, prevDiesel?.margin ?? null);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Daily Fuel Prices</h2>
+        <h2 className="text-base font-bold tracking-tight">Daily Fuel Prices</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Log today's retail selling price and purchase cost. These update the Fuel Intelligence margins in real time.
         </p>
@@ -289,7 +289,7 @@ export default function FuelPrices() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-xs min-w-[480px]">
                 <thead>
                   <tr className="border-b border-border/50">
                     <th className="text-left py-2 px-2 text-muted-foreground font-medium">Date</th>

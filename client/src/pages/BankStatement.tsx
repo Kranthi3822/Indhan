@@ -108,11 +108,11 @@ export default function BankStatement() {
   }, [transactions]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header + Add */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Bank Statement</h2>
+          <h2 className="text-base font-bold tracking-tight">Bank Statement</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Transaction history and reconciliation</p>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>

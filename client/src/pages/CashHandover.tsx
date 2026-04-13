@@ -210,11 +210,11 @@ export default function CashHandover() {
     : 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-4 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-base font-bold flex items-center gap-2">
             <Banknote className="h-6 w-6 text-green-600" />
             Cash Handover
           </h1>
@@ -461,8 +461,8 @@ function VoucherModal({ voucherId, onClose }: { voucherId: number; onClose: () =
             {/* Per-nozzle breakdown */}
             <div>
               <p className="text-sm font-semibold mb-2">Nozzle Breakdown</p>
-              <div className="rounded-lg border overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="rounded-lg border overflow-hidden overflow-x-auto">
+                <table className="w-full text-sm min-w-[480px]">
                   <thead className="bg-muted/50">
                     <tr>
                       <th className="text-left p-2.5 font-medium">Nozzle</th>

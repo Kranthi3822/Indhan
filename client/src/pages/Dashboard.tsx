@@ -222,7 +222,7 @@ export default function Dashboard() {
   }, [allProducts]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Real-time low-stock alert banner */}
       {lowStockItems.length > 0 && (
         <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
@@ -244,18 +244,18 @@ export default function Dashboard() {
           <a href="/inventory" className="text-xs text-red-400 hover:text-red-300 underline underline-offset-2 shrink-0 mt-0.5 whitespace-nowrap">View Inventory →</a>
         </div>
       )}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Good morning, Kranthi</h2>
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm text-muted-foreground">{format(new Date(latestDataDate + 'T00:00:00'), "EEEE, d MMMM yyyy")} · {STATION_SHORT_NAME}</p>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Data: Apr 2025 – Mar 2026</span>
+          <h2 className="text-base font-bold tracking-tight">Good morning, Kranthi</h2>
+          <div className="flex items-center gap-2 flex-wrap mt-0.5">
+            <p className="text-xs text-muted-foreground">{format(new Date(latestDataDate + 'T00:00:00'), "EEE, d MMM yyyy")} · {STATION_SHORT_NAME}</p>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Apr 2025 – Mar 2026</span>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex flex-col items-start sm:items-end gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {(["today", "week", "mtd", "ytd"] as const).map(p => (
-              <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)} className="text-xs h-8">
+              <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)} className="text-xs h-7 px-2.5">
                 {p === "today" ? "31 Mar" : p === "week" ? "7 Days" : p === "mtd" ? "MTD" : "FY 25-26"}
               </Button>
             ))}
@@ -263,43 +263,32 @@ export default function Dashboard() {
               variant={period === "custom" ? "default" : "outline"}
               size="sm"
               onClick={() => setPeriod("custom")}
-              className="text-xs h-8 gap-1.5"
+              className="text-xs h-7 px-2.5 gap-1"
             >
-              <CalendarRange className="w-3.5 h-3.5" />
+              <CalendarRange className="w-3 h-3" />
               Custom
             </Button>
           </div>
-          {/* Custom date range inputs — shown when Custom is selected */}
           {period === "custom" && (
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-muted-foreground">From</span>
-                <Input
-                  type="date"
-                  value={customFrom}
-                  min="2025-04-01"
-                  max={customTo || "2026-03-31"}
-                  onChange={e => setCustomFrom(e.target.value)}
-                  className="h-7 text-xs w-36 px-2"
-                />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-muted-foreground">To</span>
-                <Input
-                  type="date"
-                  value={customTo}
-                  min={customFrom || "2025-04-01"}
-                  max="2026-03-31"
-                  onChange={e => setCustomTo(e.target.value)}
-                  className="h-7 text-xs w-36 px-2"
-                />
-              </div>
-              <Button
-                size="sm"
-                onClick={applyCustomRange}
-                disabled={!customFrom || !customTo || customFrom > customTo}
-                className="h-7 text-xs px-3"
-              >
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Input
+                type="date"
+                value={customFrom}
+                min="2025-04-01"
+                max={customTo || "2026-03-31"}
+                onChange={e => setCustomFrom(e.target.value)}
+                className="h-7 text-xs w-32 px-2"
+              />
+              <span className="text-[10px] text-muted-foreground">to</span>
+              <Input
+                type="date"
+                value={customTo}
+                min={customFrom || "2025-04-01"}
+                max="2026-03-31"
+                onChange={e => setCustomTo(e.target.value)}
+                className="h-7 text-xs w-32 px-2"
+              />
+              <Button size="sm" onClick={applyCustomRange} disabled={!customFrom || !customTo || customFrom > customTo} className="h-7 text-xs px-3">
                 Apply
               </Button>
             </div>
@@ -307,7 +296,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3">
         <StatCard label="Total Sales" value={isLoading ? "—" : fmtCompact(totalSales)} rawValue={isLoading ? undefined : totalSales} sub={period === "today" ? "31 Mar 2026" : period === "week" ? "25–31 Mar 2026" : period === "ytd" ? "Apr 2025 – Mar 2026" : period === "custom" ? `${appliedFrom} – ${appliedTo}` : "Mar 2026"} icon={IndianRupee} trend="up" trendVal="+8.2%" colorClass="text-primary bg-primary/10 border-primary/20" />
         <StatCard label="Gross Profit" value={isLoading ? "—" : fmtCompact(grossProfit)} rawValue={isLoading ? undefined : grossProfit} sub={`Fuel margin earned`} icon={TrendingUp} colorClass="text-teal-400 bg-teal-500/10 border-teal-500/20" />
         <StatCard label="Expenses" value={isLoading ? "—" : fmtCompact(totalExpenses)} rawValue={isLoading ? undefined : totalExpenses} sub="Operating costs" icon={Package} trend={totalExpenses > grossProfit * 0.5 ? "down" : undefined} colorClass="text-red-400 bg-red-500/10 border-red-500/20" />
@@ -641,7 +630,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-3 pt-4 px-5">
             <div className="flex items-center justify-between">

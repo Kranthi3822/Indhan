@@ -207,6 +207,87 @@
 }
 
 @layer components {
+  /* ─── Page-level layout helpers ─────────────────────────────────────────── */
+
+  /** Standard page root — consistent vertical rhythm */
+  .page-root {
+    @apply space-y-4;
+  }
+
+  /** Page header block: title + optional subtitle + actions */
+  .page-header {
+    @apply flex flex-col sm:flex-row sm:items-start gap-3 justify-between;
+  }
+  .page-title {
+    @apply text-base font-bold tracking-tight text-foreground;
+  }
+  .page-subtitle {
+    @apply text-xs text-muted-foreground mt-0.5;
+  }
+  .page-actions {
+    @apply flex flex-wrap items-center gap-2 shrink-0;
+  }
+
+  /** Stat card value — consistent numeric display */
+  .stat-value {
+    @apply text-xl font-bold tabular-nums leading-none;
+  }
+  .stat-label {
+    @apply text-[10px] text-muted-foreground uppercase tracking-wider;
+  }
+
+  /** Standard card header */
+  .card-header-std {
+    @apply pb-2 pt-3 px-4;
+  }
+
+  /** Standard table header cell */
+  .th {
+    @apply text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2;
+  }
+  .th-right {
+    @apply text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 text-right;
+  }
+  /** Standard table data cell */
+  .td {
+    @apply px-3 py-2 text-sm;
+  }
+  .td-right {
+    @apply px-3 py-2 text-sm text-right tabular-nums;
+  }
+
+  /** Section divider label */
+  .section-label {
+    @apply text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest;
+  }
+
+  /* ─── Mobile-first helpers ───────────────────────────────────────────── */
+
+  /** Minimum touch target for interactive elements on mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /** Mobile card — slightly more padding on small screens */
+  .mobile-card {
+    @apply rounded-xl border bg-card;
+  }
+
+  /** Horizontal scroll container for tables on mobile */
+  .table-scroll {
+    @apply overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
+  }
+
+  /** Bottom safe area padding for mobile (iOS home indicator) */
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+
+  /** Compact stat on mobile, larger on desktop */
+  .stat-value-responsive {
+    @apply text-lg sm:text-xl font-bold tabular-nums leading-none;
+  }
+
   .container {
     width: 100%;
     margin-left: auto;

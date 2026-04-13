@@ -50,10 +50,10 @@ export default function Employees() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Employees</h2>
+          <h2 className="text-base font-bold tracking-tight">Employees</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Staff management, attendance tracking, and payroll</p>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
@@ -99,17 +99,17 @@ export default function Employees() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-card border-border/50"><CardContent className="p-5">
           <div className="w-9 h-9 rounded-lg border border-primary/20 bg-primary/10 flex items-center justify-center mb-3"><Users className="w-4 h-4 text-primary" /></div>
-          <p className="text-2xl font-bold tabular-nums">{isLoading ? "—" : activeCount}</p>
+          <p className="text-xl font-bold tabular-nums">{isLoading ? "—" : activeCount}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Active Employees</p>
         </CardContent></Card>
         <Card className="bg-card border-border/50"><CardContent className="p-5">
           <div className="w-9 h-9 rounded-lg border border-green-500/20 bg-green-500/10 flex items-center justify-center mb-3"><IndianRupee className="w-4 h-4 text-green-400" /></div>
-          <p className="text-2xl font-bold tabular-nums">{isLoading ? "—" : fmt(totalPayroll)}</p>
+          <p className="text-xl font-bold tabular-nums">{isLoading ? "—" : fmt(totalPayroll)}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Monthly Payroll</p>
         </CardContent></Card>
         <Card className="bg-card border-border/50"><CardContent className="p-5">
           <div className="w-9 h-9 rounded-lg border border-teal-500/20 bg-teal-500/10 flex items-center justify-center mb-3"><Clock className="w-4 h-4 text-teal-400" /></div>
-          <p className="text-2xl font-bold tabular-nums">3</p>
+          <p className="text-xl font-bold tabular-nums">3</p>
           <p className="text-xs text-muted-foreground mt-0.5">Shifts / Day</p>
         </CardContent></Card>
       </div>

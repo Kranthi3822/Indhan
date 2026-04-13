@@ -270,11 +270,11 @@ export default function NozzleEntry() {
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="space-y-4 w-full max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+          <h2 className="text-base font-bold tracking-tight flex items-center gap-2">
             <Fuel className="w-5 h-5 text-primary" /> Nozzle Entry
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">

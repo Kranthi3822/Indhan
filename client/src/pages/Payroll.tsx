@@ -236,11 +236,11 @@ export default function Payroll() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-full">
+    <div className="space-y-4 max-w-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
+          <h1 className="text-base font-bold flex items-center gap-2">
             <Users className="w-5 h-5 text-teal-400" /> HR & Payroll
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">Attendance · Payroll · Compliance</p>

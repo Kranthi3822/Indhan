@@ -225,10 +225,10 @@ export default function ReceiptScanner() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Purchase Receipt Scanner</h2>
+        <h2 className="text-base font-bold tracking-tight">Purchase Receipt Scanner</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Upload or photograph a fuel delivery receipt. AI extracts the invoice data automatically — review and confirm to create a purchase order.
         </p>

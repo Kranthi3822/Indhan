@@ -92,11 +92,11 @@ export default function Reconciliation() {
   const hasNozzleData = !!nozzleData && (nozzleData.totalPetrolLitres > 0 || nozzleData.totalDieselLitres > 0 || nozzleData.totalCollected > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Daily Reconciliation</h2>
+          <h2 className="text-base font-bold tracking-tight">Daily Reconciliation</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Verify cash, card, and bank transactions for the day</p>
         </div>
         <div className="flex items-center gap-2">

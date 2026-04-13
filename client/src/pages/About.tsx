@@ -51,7 +51,7 @@ const fmtK = (n: number) => n >= 1000 ? `₹${(n / 1000).toFixed(0)}K` : `₹${n
 
 export default function About() {
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-4 max-w-4xl">
       {/* Station Hero */}
       <Card className="bg-card border-border/50 overflow-hidden">
         <div className="h-2 bg-gradient-to-r from-teal-700 via-teal-500 to-teal-400" />
@@ -65,7 +65,7 @@ export default function About() {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold leading-tight">Bhagya Lakshmi Eco Energy Station</h1>
+              <h1 className="text-base font-bold leading-tight">Bhagya Lakshmi Eco Energy Station</h1>
               <p className="text-sm text-primary font-medium mt-0.5">Indian Oil Corporation — Authorised Dealer</p>
               <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -88,15 +88,15 @@ export default function About() {
             </div>
             <div className="flex sm:flex-col gap-5 sm:gap-3 shrink-0 text-center">
               <div>
-                <p className="text-2xl font-bold text-primary tabular-nums">5+</p>
+                <p className="text-xl font-bold text-primary tabular-nums">5+</p>
                 <p className="text-[10px] text-muted-foreground">Years</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-teal-400 tabular-nums">4</p>
+                <p className="text-xl font-bold text-teal-400 tabular-nums">4</p>
                 <p className="text-[10px] text-muted-foreground">Nozzles</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-400 tabular-nums">{TEAM.length}</p>
+                <p className="text-xl font-bold text-green-400 tabular-nums">{TEAM.length}</p>
                 <p className="text-[10px] text-muted-foreground">Staff</p>
               </div>
             </div>

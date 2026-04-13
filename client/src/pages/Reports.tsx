@@ -61,11 +61,11 @@ export default function Reports() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header + Period Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">P&L Reports</h2>
+          <h2 className="text-base font-bold tracking-tight">P&L Reports</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Profit & loss analysis for any date range</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -109,12 +109,12 @@ export default function Reports() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="bg-card border-border/50"><CardContent className="p-5">
           <div className="w-9 h-9 rounded-lg border border-green-500/20 bg-green-500/10 flex items-center justify-center mb-3"><TrendingUp className="w-4 h-4 text-green-400" /></div>
-          <p className="text-xl font-bold tabular-nums text-green-400">{isLoading ? "—" : fmt(totalRevenue)}</p>
+          <p className="text-lg font-bold tabular-nums text-green-400">{isLoading ? "—" : fmt(totalRevenue)}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Total Revenue</p>
         </CardContent></Card>
         <Card className="bg-card border-border/50"><CardContent className="p-5">
           <div className="w-9 h-9 rounded-lg border border-red-500/20 bg-red-500/10 flex items-center justify-center mb-3"><TrendingDown className="w-4 h-4 text-red-400" /></div>
-          <p className="text-xl font-bold tabular-nums text-red-400">{isLoading ? "—" : fmt(totalExpenses)}</p>
+          <p className="text-lg font-bold tabular-nums text-red-400">{isLoading ? "—" : fmt(totalExpenses)}</p>
           <p className="text-xs text-muted-foreground mt-0.5">Total Expenses</p>
         </CardContent></Card>
         <Card className="bg-card border-border/50"><CardContent className="p-5">
@@ -136,11 +136,11 @@ export default function Reports() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-xl bg-secondary/40 border border-border/40">
               <p className="text-xs text-muted-foreground mb-1">Petrol Margin</p>
-              <p className="text-2xl font-bold text-primary">₹3.95<span className="text-sm font-normal text-muted-foreground">/L</span></p>
+              <p className="text-xl font-bold text-primary">₹3.95<span className="text-sm font-normal text-muted-foreground">/L</span></p>
             </div>
             <div className="p-4 rounded-xl bg-secondary/40 border border-border/40">
               <p className="text-xs text-muted-foreground mb-1">Diesel Margin</p>
-              <p className="text-2xl font-bold text-primary">₹2.49<span className="text-sm font-normal text-muted-foreground">/L</span></p>
+              <p className="text-xl font-bold text-primary">₹2.49<span className="text-sm font-normal text-muted-foreground">/L</span></p>
             </div>
           </div>
         </CardContent>

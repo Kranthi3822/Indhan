@@ -130,7 +130,7 @@ export default function Expenses() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div className="flex flex-wrap gap-1.5">

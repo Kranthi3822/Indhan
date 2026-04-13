@@ -165,7 +165,7 @@ export default function Inventory() {
 
 
   return (
-    <div className="space-y-5" ref={scrollRef}>
+    <div className="space-y-4" ref={scrollRef}>
       {/* Pull-to-refresh indicator */}
       {(pulling || refreshing) && (
         <div

@@ -96,9 +96,9 @@ export default function ImportData() {
   const stepLabel = step === "uploading" ? "Uploading and processing file..." : step === "done" ? "Import complete!" : step === "error" ? "Import failed" : "Ready to import";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Import Historical Data</h2>
+        <h2 className="text-base font-bold tracking-tight">Import Historical Data</h2>
         <p className="text-sm text-muted-foreground mt-0.5">Migrate your existing BEES accounting Excel data into Indhan — supports up to 3 years of historical data</p>
       </div>
 
@@ -153,7 +153,7 @@ export default function ImportData() {
           {step === "done" && (
             <div className="text-center py-6">
               <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto mb-4" />
-              <p className="text-xl font-bold text-green-400 mb-1">Import Successful!</p>
+              <p className="text-base font-bold text-green-400 mb-1">Import Successful!</p>
               <p className="text-sm text-muted-foreground mb-1">{fileName}</p>
               <p className="text-sm font-semibold text-foreground mb-1">{totalImported.toLocaleString("en-IN")} records imported</p>
               <p className="text-xs text-muted-foreground">All historical data is now available across all modules in Indhan.</p>
@@ -166,7 +166,7 @@ export default function ImportData() {
           {step === "error" && (
             <div className="text-center py-6">
               <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
-              <p className="text-xl font-bold text-destructive mb-1">Import Failed</p>
+              <p className="text-base font-bold text-destructive mb-1">Import Failed</p>
               <p className="text-sm text-muted-foreground mb-4">{errorMsg}</p>
               <Button size="sm" variant="outline" onClick={() => { setStep("idle"); setProgress(0); setResults([]); }}>
                 Try Again

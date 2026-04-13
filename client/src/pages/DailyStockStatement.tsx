@@ -463,7 +463,7 @@ function AddDipDialog({
             Add / Update Dip Reading
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-5 pt-2">
+        <div className="space-y-4 pt-2">
           {/* Date */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Date</Label>
@@ -633,7 +633,7 @@ export default function DailyStockStatement() {
   }, [utils]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Add Closing Stock Dialog */}
       <AddClosingStockDialog
         open={addClosingOpen}
@@ -650,9 +650,9 @@ export default function DailyStockStatement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-3 justify-between">
         <div>
-          <h2 className="text-lg font-bold">Daily Stock Statement</h2>
+          <h2 className="text-base font-bold">Daily Stock Register</h2>
           <p className="text-xs text-muted-foreground">
-            Opening − Sales + Receipts = Closing · Click any <span className="text-amber-400 font-medium">Dip Reading</span> cell to enter a manual measurement
+            Opening + Receipts − Sales = Closing · Tap any <span className="text-amber-400 font-medium">Dip Reading</span> cell to update
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

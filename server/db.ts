@@ -289,11 +289,13 @@ export async function getAllProducts() {
   // Fetch all active products
   const allProducts = await db.select().from(products).where(eq(products.isActive, true)).orderBy(products.category, products.name);
 
-  // Get the latest closing stock for Petrol and Diesel from daily_reports (authoritative source)
-  // This avoids relying on products.currentStock which can be stale after server restarts
+  // Get the latest closing stock for Petrol and Diesel from daily_reports (authoritative source).
+  // We skip rows where BOTH closing stocks are 0 (e.g. a partially-saved or erroneous row)
+  // to avoid overwriting valid stock values with zeros.
   const latestReport = await db.execute(sql`
     SELECT closingStockPetrol, closingStockDiesel
     FROM daily_reports
+    WHERE (closingStockPetrol > 0 OR closingStockDiesel > 0)
     ORDER BY reportDate DESC
     LIMIT 1
   `) as any;
@@ -349,10 +351,11 @@ export async function getLowStockProducts() {
 export async function syncFuelStockFromLatestReport(): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  // Get the latest report's closing stocks
+  // Get the latest report with non-zero closing stocks (skip erroneous zero rows)
   const rows = await db.execute(sql`
     SELECT closingStockPetrol, closingStockDiesel
     FROM daily_reports
+    WHERE (closingStockPetrol > 0 OR closingStockDiesel > 0)
     ORDER BY reportDate DESC
     LIMIT 1
   `) as any;

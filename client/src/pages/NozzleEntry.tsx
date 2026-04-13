@@ -327,9 +327,9 @@ export default function NozzleEntry() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold tracking-tight flex items-center gap-2">
-            <Fuel className="w-5 h-5 text-primary" /> Nozzle Operations
+            <Fuel className="w-5 h-5 text-primary" /> Nozzle Entry & Daily Activity
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Shift entry & daily activity report</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Shift entry · Meter readings · Collections · Daily activity report</p>
         </div>
         {sessionId && (
           <Badge variant="outline" className="text-green-400 border-green-500/30 bg-green-500/10 text-xs">
@@ -341,10 +341,10 @@ export default function NozzleEntry() {
       <Tabs defaultValue="entry" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger value="entry" className="flex items-center gap-2">
-            <Gauge className="w-4 h-4" /> Shift Entry
+            <Gauge className="w-4 h-4" /> Nozzle Entry
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex items-center gap-2">
-            <ClipboardList className="w-4 h-4" /> Activity Report
+            <ClipboardList className="w-4 h-4" /> Daily Activity
           </TabsTrigger>
         </TabsList>
 

@@ -577,7 +577,7 @@ export default function DailyStockStatement() {
   const [applied, setApplied] = useState({ fromDate: undefined as string | undefined, toDate: undefined as string | undefined, days: 14 });
   const [refreshKey, setRefreshKey] = useState(0);
   const [addDipOpen, setAddDipOpen] = useState(false);
-  const [addClosingOpen, setAddClosingOpen] = useState(false);
+  // addClosingOpen removed — closing stock now comes from Nozzle Entry
 
   const { data: rows, isLoading } = trpc.inventory.dailyStockStatement.useQuery(applied);
 
@@ -647,12 +647,7 @@ export default function DailyStockStatement() {
 
   return (
     <div className="space-y-4">
-      {/* Add Closing Stock Dialog */}
-      <AddClosingStockDialog
-        open={addClosingOpen}
-        onOpenChange={setAddClosingOpen}
-        onSaved={() => setRefreshKey(k => k + 1)}
-      />
+      {/* Closing Stock Dialog removed — closing stock now comes from Nozzle Entry */}
       {/* Add Dip Reading Dialog */}
       <AddDipDialog
         open={addDipOpen}
@@ -669,15 +664,7 @@ export default function DailyStockStatement() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* Enter Closing Stock button — primary action */}
-          <Button
-            size="sm"
-            className="h-8 text-xs gap-1.5 bg-green-600 hover:bg-green-700 text-white font-semibold"
-            onClick={() => setAddClosingOpen(true)}
-          >
-            <PackageCheck className="w-3.5 h-3.5" />
-            Enter Closing Stock
-          </Button>
+          {/* Enter Closing Stock removed — closing stock now comes from Nozzle Entry */}
           {/* Add Dip Reading button — secondary action */}
           <Button
             size="sm"

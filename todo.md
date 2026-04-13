@@ -730,3 +730,17 @@
 - [x] Frontend: AuditLog added to sidebar under Setup (admin/accountant only)
 - [x] Frontend: /audit-log route added to App.tsx (admin/accountant only via route guard)
 - [x] TypeScript: 0 errors across all new files
+
+## Bug: Diesel (HSD) Stock Showing Wrong Value
+- [ ] Investigate root cause: check daily_reports closing stock, inventory table, dip_readings, and dashboard alert logic
+- [ ] Fix incorrect Diesel stock display (dashboard alert shows "0 / 5,000 liter")
+- [ ] Verify fix in browser and save checkpoint
+
+## Bug Fix + UI Changes (Apr 13 — Session 2)
+- [x] Fix Diesel stock: delete bad 2026-04-13 daily_reports row (closingStockDiesel=0, totalSalesValue=63M)
+- [x] Fix getAllProducts: skip latest daily_reports row if both closing stocks are 0 (use last non-zero row)
+- [x] Remove "Enter Closing Stock" button from Daily Stock Register page
+- [x] Combine Nozzle Entry + Daily Activity into single page (NozzleEntry.tsx) with two tabs — already had tabs, updated labels
+- [x] Remove Daily Activity from sidebar (was never a separate sidebar item — already merged)
+- [x] Update App.tsx routes: /daily-activity was not a separate route — already on /nozzle-entry
+- [x] TypeScript: 0 errors after all changes

@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Fuel, IndianRupee, CheckCircle2, AlertCircle, Clock,
@@ -338,18 +337,8 @@ export default function NozzleEntry() {
         )}
       </div>
 
-      <Tabs defaultValue="entry" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="entry" className="flex items-center gap-2">
-            <Gauge className="w-4 h-4" /> Nozzle Entry
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex items-center gap-2">
-            <ClipboardList className="w-4 h-4" /> Daily Activity
-          </TabsTrigger>
-        </TabsList>
-
-        {/* ===== TAB 1: ENTRY ===== */}
-        <TabsContent value="entry" className="space-y-4">
+      {/* ===== SECTION 1: NOZZLE ENTRY ===== */}
+      <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               Log meter readings & collections — {shiftDate && /^\d{4}-\d{2}-\d{2}$/.test(shiftDate) ? format(new Date(shiftDate + "T00:00:00"), "dd MMM yyyy") : "—"}
@@ -1072,10 +1061,10 @@ export default function NozzleEntry() {
           </Card>
         </div>
       )}
-        </TabsContent>
+      </div>
 
-        {/* ===== TAB 2: ACTIVITY REPORT ===== */}
-        <TabsContent value="activity" className="space-y-4">
+      {/* ===== SECTION 2: DAILY ACTIVITY REPORT ===== */}
+      <div className="border-t border-border/40 pt-6 space-y-4">
           {/* Date navigation */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -1324,8 +1313,7 @@ export default function NozzleEntry() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 }

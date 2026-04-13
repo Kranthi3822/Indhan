@@ -754,3 +754,10 @@
 - [x] Update description text (remove "Tap any Dip Reading cell to update")
 - [x] Remove AddDipDialog component usage and related state
 - [x] TypeScript: 0 errors after changes
+
+## Unified Nozzle Entry + Daily Activity Page (Apr 14)
+- [x] Remove tab structure from NozzleEntry.tsx
+- [x] Show Nozzle Entry form (shift entry) and Daily Activity report on the same scrollable page
+- [x] Daily Activity section auto-refreshes and reflects today's sessions live
+- [x] Page header clearly labels both sections
+- [x] TypeScript: 0 errors

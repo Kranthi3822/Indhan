@@ -29,6 +29,8 @@ import { usersRouter } from "./routers/usersRouter";
 import { invitationsRouter } from "./routers/invitationsRouter";
 import { auditLogRouter } from "./routers/auditLogRouter";
 import { logAudit } from "./routers/auditLogRouter";
+import { fuelDeliveryRouter } from "./routers/fuelDeliveryRouter";
+import { e70Router } from "./routers/e70Router";
 import { bankStatementRouter } from "./routers/bankStatementRouter";
 
 // ─── Shared date range input ──────────────────────────────────────────────────
@@ -462,6 +464,8 @@ export const appRouter = router({
   assets: assetsRouter,
   attendance: attendanceRouter,
   nozzle: nozzleRouter,
+  fuelDelivery: fuelDeliveryRouter,
+  e70: e70Router,
   fuelIntelligence: fuelIntelligenceRouter,
   fuelPrices: fuelPricesRouter,
   cashHandover: cashHandoverRouter,

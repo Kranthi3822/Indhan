@@ -30,6 +30,7 @@ import {
   Landmark, TrendingUp, FileUp, Settings, LogOut,
   PanelLeft, Fuel, UserCheck, ChevronRight, Bell, Sun, Moon, Info,
   Wrench, IndianRupee, ScanFace, Gauge, Tag, ScanLine, Banknote, ClipboardList, Upload, FlaskConical, UserCog, ClipboardCheck,
+  Truck, ShieldCheck, TestTube,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -58,11 +59,14 @@ const menuItems = [
   { icon: Fuel,            label: "Sales & Nozzles", path: "/sales",          group: "Operations", roles: ADMIN_INCHARGE },
   { icon: RefreshCw,       label: "Reconciliation",  path: "/reconciliation", group: "Operations", roles: ADMIN_ACCOUNTANT },
   { icon: Banknote,        label: "Cash Handover",   path: "/cash-handover",  group: "Operations", roles: ADMIN_INCHARGE },
+  { icon: ShieldCheck,     label: "Meter Approval",   path: "/meter-approval",  group: "Operations", roles: ADMIN_INCHARGE },
   // FUEL MANAGEMENT
   { icon: Tag,             label: "Fuel Prices",         path: "/fuel-prices",      group: "Fuel", roles: ADMIN_INCHARGE },
   { icon: ScanLine,        label: "Receipt Scanner",     path: "/receipt-scanner",  group: "Fuel", roles: ADMIN_ACCOUNTANT },
   { icon: Package,         label: "Inventory",           path: "/inventory",        group: "Fuel", roles: ADMIN_INCHARGE },
   { icon: FlaskConical,    label: "Daily Stock Register",path: "/daily-stock",      group: "Fuel", roles: ADMIN_INCHARGE },
+  { icon: Truck,           label: "Fuel Delivery & QC",  path: "/fuel-delivery",   group: "Fuel", roles: ADMIN_INCHARGE },
+  { icon: TestTube,        label: "E70 Testing",          path: "/e70-testing",     group: "Fuel", roles: ADMIN_INCHARGE },
   // FINANCE
   { icon: Users,           label: "Customers & Credit",  path: "/customers",              group: "Finance", roles: ADMIN_INCHARGE },
   { icon: Receipt,         label: "Expenses",            path: "/expenses",               group: "Finance", roles: ADMIN_INCHARGE },

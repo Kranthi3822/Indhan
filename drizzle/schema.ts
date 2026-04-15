@@ -8,6 +8,7 @@ import {
   decimal,
   boolean,
   bigint,
+  tinyint,
 } from "drizzle-orm/mysql-core";
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -816,3 +817,96 @@ export const auditLogs = mysqlTable("audit_logs", {
 });
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+// ─── Fuel Deliveries ─────────────────────────────────────────────────────────
+// Tracks tanker deliveries from OMC (HPCL/BPCL/IOC). Each delivery goes through
+// a quality check before fuel is unloaded into the tank.
+export const fuelDeliveries = mysqlTable("fuel_deliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  deliveryDate: varchar("deliveryDate", { length: 10 }).notNull(),   // YYYY-MM-DD
+  deliveryTime: varchar("deliveryTime", { length: 8 }),              // HH:MM:SS
+  invoiceNumber: varchar("invoiceNumber", { length: 128 }),
+  supplierName: varchar("supplierName", { length: 255 }),            // HPCL, BPCL, IOC etc.
+  vehicleNumber: varchar("vehicleNumber", { length: 32 }),           // Tanker registration
+  driverName: varchar("driverName", { length: 255 }),
+  fuelType: mysqlEnum("fuelType", ["petrol", "diesel", "lubricant"]).notNull(),
+  orderedQty: decimal("orderedQty", { precision: 10, scale: 3 }),    // Litres ordered
+  deliveredQty: decimal("deliveredQty", { precision: 10, scale: 3 }), // Litres on invoice
+  unloadedQty: decimal("unloadedQty", { precision: 10, scale: 3 }),  // Litres actually unloaded (after QC)
+  invoiceRate: decimal("invoiceRate", { precision: 10, scale: 4 }),  // Cost per litre
+  invoiceAmount: decimal("invoiceAmount", { precision: 14, scale: 2 }),
+  status: mysqlEnum("status", ["pending_qc", "qc_passed", "qc_failed", "unloaded", "rejected"]).default("pending_qc").notNull(),
+  scannedReceiptId: int("scannedReceiptId"),                         // Link to scanned_receipts if uploaded
+  loggedBy: int("loggedBy"),                                         // users.id
+  loggedByName: varchar("loggedByName", { length: 255 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FuelDelivery = typeof fuelDeliveries.$inferSelect;
+export type InsertFuelDelivery = typeof fuelDeliveries.$inferInsert;
+
+// ─── Fuel Delivery Quality Checks ────────────────────────────────────────────
+// Quality check performed by Incharge before unloading each tanker.
+export const fuelDeliveryQualityChecks = mysqlTable("fuel_delivery_quality_checks", {
+  id: int("id").autoincrement().primaryKey(),
+  deliveryId: int("deliveryId").notNull(),                           // fuelDeliveries.id
+  checkedAt: timestamp("checkedAt").defaultNow().notNull(),
+  checkedBy: int("checkedBy"),                                       // users.id
+  checkedByName: varchar("checkedByName", { length: 255 }),
+  // Physical checks
+  densityReading: decimal("densityReading", { precision: 8, scale: 4 }), // kg/m³ or g/mL
+  densityPass: tinyint("densityPass"),                               // 1=pass, 0=fail
+  colourCheck: mysqlEnum("colourCheck", ["clear", "yellow", "amber", "contaminated"]),
+  colourPass: tinyint("colourPass"),
+  waterContamination: tinyint("waterContamination"),                 // 1=water found, 0=clean
+  sedimentCheck: tinyint("sedimentCheck"),                           // 1=sediment found, 0=clean
+  // Seal & document checks
+  sealIntact: tinyint("sealIntact"),                                 // 1=yes, 0=no
+  documentMatch: tinyint("documentMatch"),                           // Invoice qty matches dipstick
+  dipstickReading: decimal("dipstickReading", { precision: 10, scale: 3 }), // Litres from tanker dip
+  // Overall result
+  overallResult: mysqlEnum("overallResult", ["pass", "fail", "conditional"]).notNull(),
+  remarks: text("remarks"),
+  // Incharge decision
+  decision: mysqlEnum("decision", ["approve_unload", "reject_tanker", "pending"]).default("pending").notNull(),
+  decisionAt: timestamp("decisionAt"),
+  decisionRemarks: text("decisionRemarks"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FuelDeliveryQualityCheck = typeof fuelDeliveryQualityChecks.$inferSelect;
+export type InsertFuelDeliveryQualityCheck = typeof fuelDeliveryQualityChecks.$inferInsert;
+
+// ─── E70 Testing ─────────────────────────────────────────────────────────────
+// Daily pre-shift quality test: 5L drawn from each nozzle, tested, then returned.
+// Net deduction = drawn_qty - returned_qty (typically 0 if all fuel returned).
+export const e70Tests = mysqlTable("e70_tests", {
+  id: int("id").autoincrement().primaryKey(),
+  testDate: varchar("testDate", { length: 10 }).notNull(),           // YYYY-MM-DD
+  nozzleId: int("nozzleId").notNull(),                               // nozzles.id
+  nozzleLabel: varchar("nozzleLabel", { length: 64 }),               // e.g. "P1", "D1"
+  fuelType: mysqlEnum("fuelType", ["petrol", "diesel"]).notNull(),
+  // Meter readings at time of E70 test (before shift opening)
+  meterReadingBefore: decimal("meterReadingBefore", { precision: 12, scale: 3 }),
+  meterReadingAfter: decimal("meterReadingAfter", { precision: 12, scale: 3 }),
+  // Quantities
+  drawnQty: decimal("drawnQty", { precision: 8, scale: 3 }).notNull(), // Litres drawn for test
+  returnedQty: decimal("returnedQty", { precision: 8, scale: 3 }).default("0"), // Litres returned to tank
+  netDeduction: decimal("netDeduction", { precision: 8, scale: 3 }), // drawn - returned
+  // Quality observations
+  densityReading: decimal("densityReading", { precision: 8, scale: 4 }),
+  colourObservation: varchar("colourObservation", { length: 128 }),  // e.g. "clear amber"
+  result: mysqlEnum("result", ["pass", "fail", "observation"]).default("pass").notNull(),
+  observations: text("observations"),
+  // Who did the test
+  testedBy: int("testedBy"),                                         // users.id
+  testedByName: varchar("testedByName", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type E70Test = typeof e70Tests.$inferSelect;
+export type InsertE70Test = typeof e70Tests.$inferInsert;
+
+// ─── Shift Session Status Extension ──────────────────────────────────────────
+// Note: shift_sessions.status enum is extended via migration to include
+// "pending_approval" and "approved" states for the Incharge approval workflow.
+// The existing "open" and "closed" states are preserved.

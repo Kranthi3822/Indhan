@@ -761,3 +761,29 @@
 - [x] Daily Activity section auto-refreshes and reflects today's sessions live
 - [x] Page header clearly labels both sections
 - [x] TypeScript: 0 errors
+
+## Three Critical Modules (Apr 14, 2026)
+
+### Module 1: Fuel Delivery Quality Check
+- [ ] DB: fuel_deliveries table (tanker details, delivery date, invoice, qty, status)
+- [ ] DB: fuel_delivery_quality_checks table (density, colour, water test, result, remarks, checked_by)
+- [ ] Backend: fuelDeliveryRouter (logDelivery, recordQualityCheck, approveUnload, rejectDelivery, listDeliveries)
+- [ ] UI: FuelDelivery.tsx page with 4-step workflow: Log Tanker → Quality Check → Approve/Reject → Confirm Unload
+- [ ] Sidebar: Add "Fuel Delivery" under Fuel group (Incharge + Admin)
+- [ ] Route: /fuel-delivery
+
+### Module 2: Incharge Meter Reading Approval
+- [ ] DB: Add status field to shift_sessions (open | pending_approval | approved | rejected)
+- [ ] Backend: nozzleRouter.submitForApproval, approveSession, rejectSession procedures
+- [ ] UI: Pump Attendant sees "Submit for Approval" button after closing readings
+- [ ] UI: Incharge sees pending sessions badge + approval queue on /meter-approval page
+- [ ] Route: /meter-approval (Incharge + Admin)
+
+### Module 3: E70 Testing Module
+- [ ] DB: e70_tests table (date, nozzle_id, drawn_qty, returned_qty, net_deduction, result, density, colour, observations, tested_by)
+- [ ] Backend: e70Router (recordTest, listTests, getTestSummary, importHistorical)
+- [ ] UI: E70Testing.tsx page with pre-shift test entry form + history log
+- [ ] Import historical E70 data from Excel (5L per nozzle per day, Apr 2025–Mar 2026)
+- [ ] Sidebar: Add "E70 Testing" under Fuel group (Incharge + Admin)
+- [ ] Route: /e70-testing
+- [ ] TypeScript: 0 errors after all changes

@@ -18,7 +18,7 @@ import {
   ChevronRight, ChevronLeft, Plus, Trash2, ArrowRight,
   Gauge, Wallet, BarChart3, ClipboardCheck, User,
   ClipboardList, Droplets, CreditCard, Smartphone, ChevronDown,
-  TrendingUp, ArrowLeft,
+  TrendingUp, ArrowLeft, Camera, Upload, X, Send,
 } from "lucide-react";
 import { format, subDays, addDays } from "date-fns";
 import { fmtCompact, fmtFull } from "@/lib/format";
@@ -61,13 +61,14 @@ const modeLabel = (mode: string, sub?: string | null) => {
   return mode;
 };
 
-// ─── Step indicator ───────────────────────────────────────────────────────────
+// ─── Step indicator ─────────────────────────────────────────────────────────────────────────────
 const STEPS = [
   { label: "Staff & Shift", icon: User },
   { label: "Opening Readings", icon: Gauge },
   { label: "Closing Readings", icon: Gauge },
   { label: "Collections", icon: Wallet },
-  { label: "Summary & Close", icon: ClipboardCheck },
+  { label: "Submit for Review", icon: Send },
+  { label: "Summary", icon: ClipboardCheck },
 ];
 
 function StepBar({ current }: { current: number }) {
@@ -110,6 +111,11 @@ export default function NozzleEntry() {
   const [collNozzle, setCollNozzle] = useState<string>("");   // mandatory — no default
   const [collCustomer, setCollCustomer] = useState("");
   const [collNotes, setCollNotes] = useState("");
+  // Photo upload state — per nozzle (base64 preview + file)
+  const [nozzlePhotos, setNozzlePhotos] = useState<Record<number, { preview: string; base64: string; fileName: string }>>({});
+  const [uploadingPhoto, setUploadingPhoto] = useState<Record<number, boolean>>({});
+  // Submit for review state
+  const [reviewNotes, setReviewNotes] = useState("");
 
   // Data queries
   const { data: staffList } = trpc.nozzle.getStaffList.useQuery();
@@ -131,7 +137,7 @@ export default function NozzleEntry() {
   );
   const { data: summary, refetch: refetchSummary } = trpc.nozzle.getSessionSummary.useQuery(
     { sessionId: sessionId! },
-    { enabled: sessionId !== null && step === 4 }
+    { enabled: sessionId !== null && step === 5 }
   );
 
   const utils = trpc.useUtils();
@@ -170,6 +176,19 @@ export default function NozzleEntry() {
     onSuccess: () => {
       toast.success("Shift closed — daily report updated automatically");
       utils.nozzle.getSessionsForDate.invalidate({ shiftDate });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const uploadMeterPhoto = trpc.nozzle.uploadMeterPhoto.useMutation({
+    onError: (e) => toast.error("Photo upload failed: " + e.message),
+  });
+
+  const submitForApproval = trpc.nozzle.submitForApproval.useMutation({
+    onSuccess: () => {
+      toast.success("Submitted for Incharge review");
+      setStep(5);
+      refetchSummary();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -264,6 +283,43 @@ export default function NozzleEntry() {
   const handleCloseShift = () => {
     if (!sessionId) return;
     closeShift.mutate({ sessionId });
+  };
+
+  // Photo select handler — converts file to base64 preview then uploads
+  const handlePhotoSelect = async (nozzleId: number, file: File) => {
+    if (!sessionId) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Photo must be under 10 MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      const base64 = dataUrl.split(",")[1];
+      setNozzlePhotos(prev => ({ ...prev, [nozzleId]: { preview: dataUrl, base64, fileName: file.name } }));
+      // Upload immediately
+      setUploadingPhoto(prev => ({ ...prev, [nozzleId]: true }));
+      try {
+        await uploadMeterPhoto.mutateAsync({
+          sessionId,
+          nozzleId,
+          fileBase64: base64,
+          fileName: file.name,
+          fileType: file.type || "image/jpeg",
+        });
+        toast.success(`Photo saved for nozzle`);
+      } catch {
+        // error already shown by mutation onError
+      } finally {
+        setUploadingPhoto(prev => ({ ...prev, [nozzleId]: false }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitForApproval = () => {
+    if (!sessionId) return;
+    submitForApproval.mutate({ sessionId });
   };
 
   // ── Derived values ───────────────────────────────────────────────────────
@@ -658,7 +714,7 @@ export default function NozzleEntry() {
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <Button className="flex-1" onClick={() => setStep(4)}>
-              Review & Close <ChevronRight className="w-4 h-4 ml-1" />
+              Submit for Review <Send className="w-4 h-4 ml-1" />
             </Button>
           </div>
         </div>
@@ -752,6 +808,57 @@ export default function NozzleEntry() {
                         </div>
                       </div>
                     )}
+
+                    {/* Meter photo upload */}
+                    <div className="mt-3 space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                        <Camera className="w-3 h-3" /> Meter Photo <span className="text-muted-foreground/50">(optional)</span>
+                      </Label>
+                      {nozzlePhotos[nozzle.id] ? (
+                        <div className="relative rounded-lg overflow-hidden border border-border/40">
+                          <img
+                            src={nozzlePhotos[nozzle.id].preview}
+                            alt="Meter reading"
+                            className="w-full h-28 object-cover"
+                          />
+                          {uploadingPhoto[nozzle.id] && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                              <div className="text-xs text-white flex items-center gap-1.5">
+                                <Upload className="w-3.5 h-3.5 animate-bounce" /> Uploading...
+                              </div>
+                            </div>
+                          )}
+                          {!uploadingPhoto[nozzle.id] && (
+                            <div className="absolute top-1.5 right-1.5 flex gap-1">
+                              <span className="text-[10px] bg-green-500/80 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <CheckCircle2 className="w-2.5 h-2.5" /> Saved
+                              </span>
+                              <button
+                                onClick={() => setNozzlePhotos(prev => { const n = { ...prev }; delete n[nozzle.id]; return n; })}
+                                className="p-1 rounded-full bg-red-500/80 text-white hover:bg-red-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed ${col.border} cursor-pointer hover:bg-muted/20 transition-colors`}>
+                          <Camera className={`w-4 h-4 ${col.text}`} />
+                          <span className="text-xs text-muted-foreground">Tap to take photo or upload</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) handlePhotoSelect(nozzle.id, file);
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -814,8 +921,100 @@ export default function NozzleEntry() {
         </div>
       )}
 
-       {/* ── Step 4: Summary & Close ─────────────────────────────────────── */}
+
+      {/* ── Step 4: Submit for Incharge Review ─────────────────────────────────── */}
       {step === 4 && (
+        <div className="space-y-4">
+          <Card className="bg-card border-border/50">
+            <CardHeader className="pb-3 pt-4 px-5">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Send className="w-4 h-4 text-primary" /> Submit for Incharge Review
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Review the shift summary below and submit for Incharge approval before closing.</p>
+            </CardHeader>
+            <CardContent className="px-5 pb-5 space-y-4">
+
+              {/* Shift summary preview */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20">
+                  <p className="text-[10px] text-muted-foreground">Petrol Sold</p>
+                  <p className="text-lg font-bold text-teal-400 tabular-nums">{liveVolumes.petrol.toFixed(2)} L</p>
+                  <p className="text-xs text-teal-300 tabular-nums">₹{(liveVolumes.petrol * PETROL_PRICE).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                  <p className="text-[10px] text-muted-foreground">Diesel Sold</p>
+                  <p className="text-lg font-bold text-blue-400 tabular-nums">{liveVolumes.diesel.toFixed(2)} L</p>
+                  <p className="text-xs text-blue-300 tabular-nums">₹{(liveVolumes.diesel * DIESEL_PRICE).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: "Cash", value: collectionTotals.cash, color: "text-green-400 bg-green-500/10 border-green-500/20" },
+                  { label: "Digital", value: collectionTotals.digital, color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
+                  { label: "Credit", value: collectionTotals.credit, color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
+                ].map(item => (
+                  <div key={item.label} className={`p-3 rounded-xl border text-center ${item.color}`}>
+                    <p className="text-[10px] font-medium mb-0.5">{item.label}</p>
+                    <p className="text-sm font-bold tabular-nums">{fmtCompact(item.value)}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className={`p-3 rounded-xl border ${Math.abs(variance) < 500 ? "bg-green-500/5 border-green-500/20" : "bg-amber-500/5 border-amber-500/20"} flex items-center justify-between`}>
+                <div>
+                  <p className="text-xs text-muted-foreground">Expected Sales</p>
+                  <p className="text-base font-bold tabular-nums">{fmtCompact(expectedValue)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Total Collected</p>
+                  <p className="text-base font-bold tabular-nums">{fmtCompact(collectionTotals.total)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Variance</p>
+                  <p className={`text-base font-bold tabular-nums ${Math.abs(variance) < 500 ? "text-green-400" : "text-amber-400"}`}>
+                    {variance >= 0 ? "+" : ""}{fmtCompact(variance)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Photos taken */}
+              {Object.keys(nozzlePhotos).length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Meter Photos Attached</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {Object.entries(nozzlePhotos).map(([nozzleId, photo]) => {
+                      const nozzle = nozzles?.find(n => n.id === Number(nozzleId));
+                      return (
+                        <div key={nozzleId} className="relative">
+                          <img src={photo.preview} alt="meter" className="w-20 h-20 object-cover rounded-lg border border-border/40" />
+                          <p className="text-[9px] text-center text-muted-foreground mt-0.5">{nozzle?.label ?? `Nozzle ${nozzleId}`}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                </Button>
+                <Button
+                  className="flex-1 bg-primary"
+                  onClick={handleSubmitForApproval}
+                  disabled={submitForApproval.isPending}
+                >
+                  {submitForApproval.isPending ? "Submitting..." : "Submit for Incharge Review"} <Send className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+       {/* ── Step 5: Summary & Close ─────────────────────────────────────── */}
+      {step === 5 && (
         <div className="space-y-4">
           {/* Per-nozzle sales breakdown */}
           <Card className="bg-card border-border/50">
@@ -1021,7 +1220,7 @@ export default function NozzleEntry() {
               </p>
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                <Button variant="outline" onClick={() => setStep(4)} className="flex-1">
                   <ChevronLeft className="w-4 h-4 mr-1" /> Back
                 </Button>
                 <Button

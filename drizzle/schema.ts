@@ -588,6 +588,8 @@ export const nozzleReadings = mysqlTable("nozzle_readings", {
   recordedAt: timestamp("recorded_at").defaultNow().notNull(),
   recordedBy: varchar("recorded_by", { length: 100 }),
   notes: text("notes"),
+  photoUrl: varchar("photo_url", { length: 1000 }),
+  photoKey: varchar("photo_key", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type NozzleReading = typeof nozzleReadings.$inferSelect;

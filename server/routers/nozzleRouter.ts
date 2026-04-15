@@ -6,6 +6,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
+import { storagePut } from "../storage";
 import { getDb } from "../db";
 import {
   getAllPumpsWithNozzles,
@@ -598,5 +599,60 @@ export const nozzleRouter = router({
         LIMIT 200
       `);
       return (rows as unknown as any[][])[0] ?? [];
+    }),
+
+  // ── Pump Attendant: upload meter photo for a closing reading ─────────────
+  uploadMeterPhoto: protectedProcedure
+    .input(z.object({
+      sessionId: z.number().int().positive(),
+      nozzleId: z.number().int().positive(),
+      fileBase64: z.string().min(1),
+      fileName: z.string().max(255),
+      fileType: z.string().max(50),
+    }))
+    .mutation(async ({ input }) => {
+      const session = await getShiftSession(input.sessionId);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+      // Decode base64 and upload to S3
+      const base64Data = input.fileBase64.replace(/^data:[^;]+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const ext = input.fileName.split(".").pop() ?? "jpg";
+      const fileKey = `meter-photos/${input.sessionId}-nozzle${input.nozzleId}-${Date.now()}.${ext}`;
+      const { url } = await storagePut(fileKey, buffer, input.fileType);
+      // Persist url + key on the closing nozzle_reading row
+      const db = await getDb();
+      if (db) {
+        await db.execute(sql`
+          UPDATE nozzle_readings
+          SET photo_url = ${url}, photo_key = ${fileKey}
+          WHERE session_id = ${input.sessionId}
+            AND nozzle_id = ${input.nozzleId}
+            AND reading_type = 'closing'
+          ORDER BY id DESC
+          LIMIT 1
+        `);
+      }
+      return { success: true, url, fileKey };
+    }),
+
+  // ── Pump Attendant: submit closed shift for Incharge review ─────────────
+  submitForApproval: protectedProcedure
+    .input(z.object({
+      sessionId: z.number().int().positive(),
+    }))
+    .mutation(async ({ input }) => {
+      const session = await getShiftSession(input.sessionId);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+      if (session.status !== "closed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Session must be closed before submitting for approval" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      await db.execute(sql`
+        UPDATE shift_sessions
+        SET incharge_approval_status = 'pending_approval'
+        WHERE id = ${input.sessionId}
+      `);
+      return { success: true, sessionId: input.sessionId };
     }),
 });

@@ -786,4 +786,11 @@
 - [ ] Import historical E70 data from Excel (5L per nozzle per day, Apr 2025–Mar 2026)
 - [ ] Sidebar: Add "E70 Testing" under Fuel group (Incharge + Admin)
 - [ ] Route: /e70-testing
-- [ ] TypeScript: 0 errors after all changes
+- [x] TypeScript: 0 errors after all changes
+
+## Opening Readings Bug Fix + New Features (Apr 15)
+- [x] Fix getPreviousClosingReadings: seeded March 31, 2026 baseline readings into nozzle_readings — 01/04/2026 now correctly shows March 31 closing values
+- [x] Auto-calculate total fuel sold = closing - opening - testing, shown live in Closing Readings step (gross dispensed / sold qty / sales amount per nozzle) and confirmed in Summary step
+- [x] Add Incharge review step (step 4): after collections, pump attendant submits for review; submitForApproval mutation sets status to pending_approval; Incharge approves from Meter Approval page
+- [x] Add meter photo upload for closing readings (S3 storage, optional, per-nozzle) — camera capture + file upload, instant preview, upload to S3 via uploadMeterPhoto mutation
+- [x] TypeScript: 0 errors after all changes

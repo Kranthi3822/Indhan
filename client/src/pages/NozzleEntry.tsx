@@ -65,8 +65,8 @@ const modeLabel = (mode: string, sub?: string | null) => {
 const STEPS = [
   { label: "Staff & Shift", icon: User },
   { label: "Opening Readings", icon: Gauge },
-  { label: "Collections", icon: Wallet },
   { label: "Closing Readings", icon: Gauge },
+  { label: "Collections", icon: Wallet },
   { label: "Summary & Close", icon: ClipboardCheck },
 ];
 
@@ -201,7 +201,7 @@ export default function NozzleEntry() {
       }).catch(() => { allSaved = false; });
     }
     if (allSaved) {
-      toast.success("Opening readings confirmed — proceed to log collections");
+      toast.success("Opening readings confirmed — enter closing meter readings");
       setStep(2);
     }
   };
@@ -255,9 +255,9 @@ export default function NozzleEntry() {
         testingQty: tQty,
       });
     }
-    if (allSaved) {
-      toast.success("Closing readings & testing quantities saved");
-      setStep(4);
+      if (allSaved) {
+      toast.success("Closing readings saved — now log collections");
+      setStep(3);
     }
   };
 
@@ -474,9 +474,8 @@ export default function NozzleEntry() {
           </CardContent>
         </Card>
       )}
-
-      {/* ── Step 2: Collections ───────────────────────────────────────────── */}
-      {step === 2 && (
+      {/* ── Step 3: Collections ───────────────────────────────────────────────────── */}
+      {step === 3 && (
         <div className="space-y-4">
           {/* Live totals bar — 3 modes */}
           <div className="grid grid-cols-3 gap-2">
@@ -655,18 +654,18 @@ export default function NozzleEntry() {
           )}
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+            <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
-            <Button className="flex-1" onClick={() => setStep(3)}>
-              Enter Closing Readings <ChevronRight className="w-4 h-4 ml-1" />
+            <Button className="flex-1" onClick={() => setStep(4)}>
+              Review & Close <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* ── Step 3: Closing Readings ──────────────────────────────────────── */}
-      {step === 3 && nozzles && (
+      {/* ── Step 2: Closing Readings ──────────────────────────────────────── */}
+      {step === 2 && nozzles && (
         <div className="space-y-4">
           <Card className="bg-card border-border/50">
             <CardHeader className="pb-3 pt-4 px-5">
@@ -801,7 +800,7 @@ export default function NozzleEntry() {
           )}
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+            <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <Button
@@ -809,7 +808,7 @@ export default function NozzleEntry() {
               onClick={handleSaveClosingReadings}
               disabled={saveReading.isPending}
             >
-              {saveReading.isPending ? "Saving..." : "Save & Review"} <ChevronRight className="w-4 h-4 ml-1" />
+              {saveReading.isPending ? "Saving..." : "Add Collections"} <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         </div>

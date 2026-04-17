@@ -24,6 +24,20 @@
   </head>
 
   <body>
+    <script>
+      // Force unregister all service workers to ensure users get the latest version
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+          if (registrations.length > 0) {
+            console.log('Unregistered stale service workers, reloading...');
+            window.location.reload();
+          }
+        });
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script

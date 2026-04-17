@@ -31,10 +31,8 @@ import ReceiptScanner from "./pages/ReceiptScanner";
 import CashHandover from "./pages/CashHandover";
 import UserManagement from "./pages/UserManagement";
 import AuditLog from "./pages/AuditLog";
-import FuelDelivery from "./pages/FuelDelivery";
-import E70Testing from "./pages/E70Testing";
-import MeterApproval from "./pages/MeterApproval";
 import { useAuth } from "./_core/hooks/useAuth";
+import Login from "./pages/Login";
 
 // Role-based route access map — mirrors DashboardLayout menuItems roles
 type UserRole = "admin" | "owner" | "accountant" | "incharge" | "pump_attendant" | "user";
@@ -97,6 +95,12 @@ function GuardedRoute({ path, component: Component }: { path: string; component:
 }
 
 function Router() {
+  const [location] = useLocation();
+
+  if (location === "/login") {
+    return <Login />;
+  }
+
   return (
     <DashboardLayout>
       <Switch>
@@ -124,9 +128,6 @@ function Router() {
         <Route path="/cash-handover" component={() => <GuardedRoute path="/cash-handover" component={CashHandover} />} />
         <Route path="/users" component={() => <GuardedRoute path="/users" component={UserManagement} />} />
         <Route path="/audit-log" component={() => <GuardedRoute path="/audit-log" component={AuditLog} />} />
-        <Route path="/fuel-delivery" component={() => <GuardedRoute path="/fuel-delivery" component={FuelDelivery} />} />
-        <Route path="/e70-testing" component={() => <GuardedRoute path="/e70-testing" component={E70Testing} />} />
-        <Route path="/meter-approval" component={() => <GuardedRoute path="/meter-approval" component={MeterApproval} />} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>

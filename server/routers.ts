@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import bcrypt from "bcryptjs";
+import { nanoid } from "nanoid";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, operationalProcedure, adminProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -16,8 +18,10 @@ import {
   saveClosingStock,
   getPLReport,
   getSalesTransactions, createSalesTransaction,
+  getUserByEmail, getUserCount, upsertUser,
 } from "./db";
 
+import { sdk } from "./_core/sdk";
 import { invokeLLM } from "./_core/llm";
 import { hrRouter, assetsRouter } from "./routers-hr";
 import { attendanceRouter } from "./routers/attendanceRouter";
@@ -29,8 +33,6 @@ import { usersRouter } from "./routers/usersRouter";
 import { invitationsRouter } from "./routers/invitationsRouter";
 import { auditLogRouter } from "./routers/auditLogRouter";
 import { logAudit } from "./routers/auditLogRouter";
-import { fuelDeliveryRouter } from "./routers/fuelDeliveryRouter";
-import { e70Router } from "./routers/e70Router";
 import { bankStatementRouter } from "./routers/bankStatementRouter";
 
 // ─── Shared date range input ──────────────────────────────────────────────────
@@ -443,6 +445,53 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    needsSetup: publicProcedure.query(async () => {
+      const count = await getUserCount();
+      return count === 0;
+    }),
+    login: publicProcedure.input(z.object({
+      email: z.string().email(),
+      password: z.string().min(1),
+    })).mutation(async ({ input, ctx }) => {
+      const user = await getUserByEmail(input.email);
+      if (!user || !user.passwordHash) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+      }
+      const valid = await bcrypt.compare(input.password, user.passwordHash);
+      if (!valid) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+      }
+      const token = await sdk.createSessionToken(user.openId, { name: user.name || "" });
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      await upsertUser({ openId: user.openId, lastSignedIn: new Date() });
+      return { success: true } as const;
+    }),
+    setup: publicProcedure.input(z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      password: z.string().min(8),
+    })).mutation(async ({ input, ctx }) => {
+      const count = await getUserCount();
+      if (count > 0) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Setup already complete" });
+      }
+      const passwordHash = await bcrypt.hash(input.password, 12);
+      const openId = nanoid();
+      await upsertUser({
+        openId,
+        name: input.name,
+        email: input.email,
+        passwordHash,
+        loginMethod: "email",
+        role: "admin",
+        lastSignedIn: new Date(),
+      });
+      const token = await sdk.createSessionToken(openId, { name: input.name });
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      return { success: true } as const;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -464,8 +513,6 @@ export const appRouter = router({
   assets: assetsRouter,
   attendance: attendanceRouter,
   nozzle: nozzleRouter,
-  fuelDelivery: fuelDeliveryRouter,
-  e70: e70Router,
   fuelIntelligence: fuelIntelligenceRouter,
   fuelPrices: fuelPricesRouter,
   cashHandover: cashHandoverRouter,

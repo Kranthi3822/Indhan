@@ -222,16 +222,14 @@ const expensesRouter = router({
   }),
   approve: adminProcedure.input(z.object({
     id: z.number(),
-    status: z.enum(["approved", "rejected"]),
-    approvedBy: z.string(),
+    status: z.enum(["Approved", "Rejected"]),
   })).mutation(async ({ input, ctx }) => {
-    await updateExpenseApproval(input.id, input.status, input.approvedBy);
-    await logAudit({ userId: ctx.user.id, userName: ctx.user.name, userRole: ctx.user.role, action: "approve", module: "expenses", resourceId: input.id, details: `Status: ${input.status} by ${input.approvedBy}` });
+    await updateExpenseApproval(input.id, input.status, ctx.user.name);
     return { success: true };
   }),
 });
 
-// ─── Bank Transactions Router ─────────────────────────────────────────────────
+// ─── Bank Router ──────────────────────────────────────────────────────────────
 const bankRouter = router({
   list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
     return getBankTransactions(input.startDate, input.endDate);
@@ -239,35 +237,27 @@ const bankRouter = router({
   summary: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
     return getBankSummary(input.startDate, input.endDate);
   }),
-  create: adminProcedure.input(z.object({
+  create: protectedProcedure.input(z.object({
     transactionDate: safeDate,
-    description: z.string().min(1).max(500),
-    transactionType: z.enum(["NEFT", "RTGS", "IMPS", "Cash", "Credit Card", "UPI"]),
-    withdrawal: z.number().min(0).max(100_000_000).default(0),
-    deposit: z.number().min(0).max(100_000_000).default(0),
-    balance: z.number().optional(),
-    referenceNo: z.string().max(100).optional(),
-  })).mutation(async ({ input, ctx }) => {
-    await createBankTransaction({
-      ...input,
-      withdrawal: String(input.withdrawal),
-      deposit: String(input.deposit),
-      balance: input.balance !== undefined ? String(input.balance) : undefined,
-    });
-    await logAudit({ userId: ctx.user.id, userName: ctx.user.name, userRole: ctx.user.role, action: "create", module: "bank", details: `${input.transactionType}: ₹${input.deposit || input.withdrawal} — ${input.description}` });
+    description: z.string().min(1),
+    amount: z.number(),
+    type: z.enum(["credit", "debit"]),
+    referenceNo: z.string().optional(),
+    notes: z.string().optional(),
+  })).mutation(async ({ input }) => {
+    await createBankTransaction({ ...input, amount: String(input.amount) });
     return { success: true };
   }),
-  reconcile: adminProcedure.input(z.object({
+  reconcile: protectedProcedure.input(z.object({
     id: z.number(),
-    status: z.enum(["matched", "unmatched", "pending"]),
-  })).mutation(async ({ input, ctx }) => {
-    await updateBankReconciliation(input.id, input.status);
-    await logAudit({ userId: ctx.user.id, userName: ctx.user.name, userRole: ctx.user.role, action: "update", module: "bank", resourceId: input.id, details: `Reconciliation status: ${input.status}` });
+    isReconciled: z.boolean(),
+  })).mutation(async ({ input }) => {
+    await updateBankReconciliation(input.id, input.isReconciled);
     return { success: true };
   }),
 });
 
-// ─── Weigh Bridge Router ──────────────────────────────────────────────────────
+// ─── WeighBridge Router ───────────────────────────────────────────────────────
 const weighBridgeRouter = router({
   list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
     return getWeighBridgeRecords(input.startDate, input.endDate);
@@ -276,80 +266,65 @@ const weighBridgeRouter = router({
     return getWeighBridgeSummary(input.startDate, input.endDate);
   }),
   create: protectedProcedure.input(z.object({
-    ticketDate: z.string(),
-    ticketNo: z.number().optional(),
-    vehicleNo: z.string().optional(),
-    noOfVehicles: z.number().default(1),
-    weight: z.number().optional(),
-    amount: z.number().optional(),
-    cumulativeAmount: z.number().optional(),
-    remarks: z.string().optional(),
-    bankDeposit: z.number().optional(),
+    entryDate: safeDate,
+    vehicleNo: z.string().min(1),
+    customerName: z.string().min(1),
+    material: z.string().optional(),
+    grossWeight: z.number(),
+    tareWeight: z.number(),
+    netWeight: z.number(),
+    charges: z.number(),
   })).mutation(async ({ input }) => {
-    await createWeighBridgeRecord({
-      ...input,
-      weight: input.weight !== undefined ? String(input.weight) : undefined,
-      amount: input.amount !== undefined ? String(input.amount) : undefined,
-      cumulativeAmount: input.cumulativeAmount !== undefined ? String(input.cumulativeAmount) : undefined,
-      bankDeposit: input.bankDeposit !== undefined ? String(input.bankDeposit) : undefined,
-    });
+    await createWeighBridgeRecord({ ...input, grossWeight: String(input.grossWeight), tareWeight: String(input.tareWeight), netWeight: String(input.netWeight), charges: String(input.charges) });
     return { success: true };
   }),
 });
 
-// ─── Daily Reports Router ─────────────────────────────────────────────────────
+// ─── Reconciliation Router ────────────────────────────────────────────────────
 const reconciliationRouter = router({
-  list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+  dailyReports: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
     return getDailyReports(input.startDate, input.endDate);
   }),
-  byDate: protectedProcedure.input(z.object({ reportDate: z.string() })).query(async ({ input }) => {
-    return getDailyReport(input.reportDate);
+  report: protectedProcedure.input(z.object({ date: safeDate })).query(async ({ input }) => {
+    return getDailyReport(input.date);
   }),
-  upsert: protectedProcedure.input(z.object({
-    reportDate: z.string(),
-    openingStockPetrol: z.number().default(0),
-    openingStockDiesel: z.number().default(0),
-    closingStockPetrol: z.number().default(0),
-    closingStockDiesel: z.number().default(0),
-    petrolSalesQty: z.number().default(0),
-    dieselSalesQty: z.number().default(0),
-    totalSalesValue: z.number().default(0),
-    cashCollected: z.number().default(0),
-    cardCollected: z.number().default(0),
-    onlineCollected: z.number().default(0),
-    creditSales: z.number().default(0),
-    totalCollected: z.number().default(0),
-    totalExpenses: z.number().default(0),
-    bankDeposit: z.number().default(0),
-    cashBalance: z.number().default(0),
-    grossProfit: z.number().default(0),
-    netProfit: z.number().default(0),
-    reconciliationStatus: z.enum(["pending", "reconciled", "discrepancy"]).default("pending"),
+  saveReport: protectedProcedure.input(z.object({
+    reportDate: safeDate,
+    openingStockPetrol: z.number().optional(),
+    openingStockDiesel: z.number().optional(),
+    purchasePetrol: z.number().optional(),
+    purchaseDiesel: z.number().optional(),
+    salesPetrol: z.number().optional(),
+    salesDiesel: z.number().optional(),
+    closingStockPetrol: z.number().optional(),
+    closingStockDiesel: z.number().optional(),
+    testingPetrol: z.number().optional(),
+    testingDiesel: z.number().optional(),
+    totalCashCollected: z.number().optional(),
+    totalDigitalCollected: z.number().optional(),
+    totalCreditSales: z.number().optional(),
+    totalExpenses: z.number().optional(),
+    netCashInHand: z.number().optional(),
     notes: z.string().optional(),
   })).mutation(async ({ input }) => {
-    const { reportDate, reconciliationStatus, notes, ...nums } = input;
-    const strData: Parameters<typeof upsertDailyReport>[0] = {
-      reportDate,
-      ...(reconciliationStatus ? { reconciliationStatus } : {}),
-      ...(notes ? { notes } : {}),
-      ...Object.fromEntries(Object.entries(nums).map(([k, v]) => [k, String(v)])),
-    };
-    await upsertDailyReport(strData);
-    // Sync products.currentStock so Inventory page always shows the latest closing stock
-    await syncFuelStockFromLatestReport().catch(() => {/* non-fatal */});
+    const data: any = { ...input };
+    ["openingStockPetrol", "openingStockDiesel", "purchasePetrol", "purchaseDiesel", "salesPetrol", "salesDiesel", "closingStockPetrol", "closingStockDiesel", "testingPetrol", "testingDiesel", "totalCashCollected", "totalDigitalCollected", "totalCreditSales", "totalExpenses", "netCashInHand"].forEach(key => {
+      if (data[key] !== undefined) data[key] = String(data[key]);
+    });
+    await upsertDailyReport(data);
     return { success: true };
   }),
-
-  // ─── Save closing stock (tank-dip based daily reconciliation) ──────────────
-  // User enters today's closing stock; system auto-calculates opening (= yesterday's closing)
-  // and sales (= opening + receipts − closing).
+  syncStock: adminProcedure.input(z.object({ reportDate: safeDate })).mutation(async ({ input }) => {
+    await syncFuelStockFromLatestReport(input.reportDate);
+    return { success: true };
+  }),
   saveClosingStock: protectedProcedure.input(z.object({
-    reportDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    closingStockPetrol: z.number().min(0).max(100000),
-    closingStockDiesel: z.number().min(0).max(100000),
-    notes: z.string().optional(),
+    reportDate: safeDate,
+    closingStockPetrol: z.number(),
+    closingStockDiesel: z.number(),
   })).mutation(async ({ input }) => {
-    return saveClosingStock(input);
+    await saveClosingStock(input.reportDate, String(input.closingStockPetrol), String(input.closingStockDiesel));
+    return { success: true };
   }),
 });
 
@@ -362,94 +337,56 @@ const plRouter = router({
 
 // ─── Sales Router ─────────────────────────────────────────────────────────────
 const salesRouter = router({
-  list: protectedProcedure.input(z.object({
-    startDate: z.string(),
-    endDate: z.string(),
-    customerId: z.number().optional(),
-  })).query(async ({ input }) => {
-    return getSalesTransactions(input.startDate, input.endDate, input.customerId);
+  list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getSalesTransactions(input.startDate, input.endDate);
   }),
   create: protectedProcedure.input(z.object({
-    transactionDate: z.string(),
-    customerId: z.number().optional(),
+    saleDate: safeDate,
     productId: z.number(),
     quantity: z.number(),
-    unitPrice: z.number(),
-    totalAmount: z.number(),
-    paymentMethod: z.enum(["cash", "credit_card", "online", "credit", "fuel"]),
-    paymentStatus: z.enum(["paid", "payable", "due_payable", "due_paid", "received"]).default("paid"),
-    pumpNo: z.string().optional(),
-    paidBy: z.string().optional(),
+    rate: z.number(),
+    amount: z.number(),
+    paymentMode: z.enum(["cash", "digital", "credit"]),
+    customerId: z.number().optional(),
     notes: z.string().optional(),
   })).mutation(async ({ input }) => {
-    await createSalesTransaction({
-      ...input,
-      quantity: String(input.quantity),
-      unitPrice: String(input.unitPrice),
-      totalAmount: String(input.totalAmount),
-    });
+    await createSalesTransaction({ ...input, quantity: String(input.quantity), rate: String(input.rate), amount: String(input.amount) });
     return { success: true };
   }),
 });
 
-// ─── Sathi AI Router ─────────────────────────────────────────────────────────
+// ─── Sathi Agent Router (AI) ──────────────────────────────────────────────────
 const sathiRouter = router({
-  ask: protectedProcedure.input(z.object({ question: z.string().min(1).max(1000) })).mutation(async ({ input }) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
-    const kpis = await getDashboardKPIs(monthStart, today).catch(() => null);
-    const lowStock = await getLowStockProducts().catch(() => []);
-    const receivables = await getCustomerReceivables().catch(() => []);
-    const expSummary = await getExpenseSummaryByCategory(monthStart, today).catch(() => []);
-
-    const context = `
-You are Sathi, the AI assistant for Indhan — a fuel station management platform used at BEES Fuel Station.
-Today's date: ${today}
-
-Current KPIs (this month):
-- Total Sales: Rs ${kpis?.totalSales ?? 'N/A'}
-- Total Expenses: Rs ${kpis?.totalExpenses ?? 'N/A'}
-- Gross Profit: Rs ${kpis?.grossProfit ?? 'N/A'}
-- Cash Balance: Rs ${kpis?.cashBalance ?? 'N/A'}
-- Outstanding Receivables: Rs ${kpis?.totalReceivables ?? 'N/A'}
-- Total Collected: Rs ${kpis?.totalCollected ?? 'N/A'}
-
-Fuel Margins: Petrol Rs 3.95/litre, Diesel Rs 2.49/litre
-Supplier: Indian Oil Corporation
-
-Low Stock Items: ${lowStock.length > 0 ? lowStock.map((p: any) => p.name + ' (' + p.currentStock + ' ' + p.unit + ')').join(', ') : 'None'}
-
-Top Customer Receivables:
-${receivables.slice(0, 5).map((r: any) => `- ${r.name}: Rs ${r.outstandingBalance}`).join('\n')}
-
-Expense Summary (this month):
-${expSummary.map((e: any) => `- ${e.category}: Rs ${e.totalAmount}`).join('\n')}
-
-Expense Categories: Wages, Admin, Electricity, Hospitality, Maintenance, Performance Bonus
-
-Answer the user's question concisely and helpfully. Use Indian number formatting (lakhs, crores). Be direct and actionable.
-`;
-
-    const response = await invokeLLM({
-      messages: [
-        { role: "system", content: context },
-        { role: "user", content: input.question },
-      ],
+  chat: protectedProcedure.input(z.object({
+    message: z.string(),
+    history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).optional(),
+  })).mutation(async ({ input, ctx }) => {
+    const systemPrompt = `You are "Sathi", the intelligent operations assistant for Indhan Fuel Station OS. 
+    The user is ${ctx.user.name} (Role: ${ctx.user.role}).
+    Station: BEES Fuel Station, Velgatoor.
+    Provide helpful, data-driven advice on fuel station management, inventory, staff, and financial reconciliation. 
+    Be professional, concise, and context-aware.`;
+    
+    return invokeLLM({
+      systemPrompt,
+      userPrompt: input.message,
+      history: input.history,
     });
-
-    const answer = (response.choices?.[0]?.message?.content as string) ?? "I could not process your query. Please try again.";
-    return { answer };
   }),
 });
 
-// ─── App Router ────────────────────────────────────────────────────────────────────────────────
+// ─── Root Router ──────────────────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    needsSetup: publicProcedure.query(async () => {
-      const count = await getUserCount();
-      return count === 0;
+    me: protectedProcedure.query(({ ctx }) => {
+      return {
+        id: ctx.user.id,
+        openId: ctx.user.openId,
+        name: ctx.user.name,
+        email: ctx.user.email,
+        role: ctx.user.role,
+      };
     }),
     login: publicProcedure.input(z.object({
       email: z.string().email(),

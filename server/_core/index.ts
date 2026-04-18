@@ -59,11 +59,12 @@ async function startServer() {
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${port}/`);
     // Sync fuel stock from latest daily report on startup so Inventory page always shows correct values
-    // We wrap this in a check to ensure DATABASE_URL is present
-    if (process.env.DATABASE_URL) {
+    // We wrap this in a check to ensure a database URL is present
+    const dbUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.MYSQL_PRIVATE_URL || process.env.MYSQL_PUBLIC_URL;
+    if (dbUrl) {
       syncFuelStockFromLatestReport().catch(e => console.warn('[startup] syncFuelStock failed:', e.message));
     } else {
-      console.warn('[startup] DATABASE_URL is not set, skipping initial fuel stock sync.');
+      console.warn('[startup] No database URL found in environment variables, skipping initial fuel stock sync.');
     }
   });
 }

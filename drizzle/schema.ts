@@ -875,3 +875,30 @@ export const fuelDeliveries = mysqlTable("fuel_deliveries", {
 
 export type FuelDelivery = typeof fuelDeliveries.$inferSelect;
 export type InsertFuelDelivery = typeof fuelDeliveries.$inferInsert;
+
+// ─── Fuel Delivery Quality Checks ─────────────────────────────────────────────
+export const fuelDeliveryQualityChecks = mysqlTable("fuel_delivery_quality_checks", {
+  id: int("id").autoincrement().primaryKey(),
+  deliveryId: int("deliveryId").notNull(),
+  checkedBy: int("checkedBy"),
+  checkedByName: varchar("checkedByName", { length: 255 }),
+  checkedAt: timestamp("checkedAt"),
+  densityReading: decimal("densityReading", { precision: 10, scale: 2 }),
+  densityPass: boolean("densityPass"),
+  colourCheck: mysqlEnum("colourCheck", ["clear", "yellow", "amber", "contaminated"]),
+  colourPass: boolean("colourPass"),
+  waterContamination: boolean("waterContamination"),
+  sedimentCheck: boolean("sedimentCheck"),
+  sealIntact: boolean("sealIntact"),
+  documentMatch: boolean("documentMatch"),
+  dipstickReading: decimal("dipstickReading", { precision: 10, scale: 2 }),
+  overallResult: mysqlEnum("overallResult", ["pass", "fail", "conditional"]),
+  remarks: text("remarks"),
+  decision: mysqlEnum("decision", ["pending", "approve_unload", "reject_tanker"]).default("pending"),
+  decisionAt: timestamp("decisionAt"),
+  decisionRemarks: text("decisionRemarks"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FuelDeliveryQualityCheck = typeof fuelDeliveryQualityChecks.$inferSelect;
+export type InsertFuelDeliveryQualityCheck = typeof fuelDeliveryQualityChecks.$inferInsert;

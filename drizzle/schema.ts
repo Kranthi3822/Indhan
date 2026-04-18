@@ -817,3 +817,61 @@ export const auditLogs = mysqlTable("audit_logs", {
 });
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+// ─── E70 Testing ──────────────────────────────────────────────────────────────
+export const e70Tests = mysqlTable("e70_tests", {
+  id: int("id").autoincrement().primaryKey(),
+  testDate: varchar("testDate", { length: 10 }).notNull(),
+  nozzleId: int("nozzleId").notNull(),
+  nozzleLabel: varchar("nozzleLabel", { length: 64 }),
+  fuelType: mysqlEnum("fuelType", ["petrol", "diesel"]).notNull(),
+  pumpId: int("pumpId"),
+  pumpLabel: varchar("pumpLabel", { length: 64 }),
+  meterReadingBefore: decimal("meterReadingBefore", { precision: 15, scale: 2 }),
+  meterReadingAfter: decimal("meterReadingAfter", { precision: 15, scale: 2 }),
+  drawnQty: decimal("drawnQty", { precision: 10, scale: 2 }).default("5.00"),
+  returnedQty: decimal("returnedQty", { precision: 10, scale: 2 }),
+  colourCheck: mysqlEnum("colourCheck", ["clear", "yellow", "amber", "contaminated"]),
+  colourPass: boolean("colourPass"),
+  densityReading: decimal("densityReading", { precision: 10, scale: 2 }),
+  densityPass: boolean("densityPass"),
+  waterContent: boolean("waterContent"),
+  flashPoint: decimal("flashPoint", { precision: 10, scale: 2 }),
+  flashPointPass: boolean("flashPointPass"),
+  testResult: mysqlEnum("testResult", ["pass", "fail"]).notNull(),
+  remarks: text("remarks"),
+  testedBy: int("testedBy"),
+  testedByName: varchar("testedByName", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type E70Test = typeof e70Tests.$inferSelect;
+export type InsertE70Test = typeof e70Tests.$inferInsert;
+
+// ─── Fuel Deliveries ──────────────────────────────────────────────────────────
+export const fuelDeliveries = mysqlTable("fuel_deliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  deliveryDate: varchar("deliveryDate", { length: 10 }).notNull(),
+  deliveryTime: varchar("deliveryTime", { length: 8 }),
+  supplierName: varchar("supplierName", { length: 255 }),
+  vehicleNumber: varchar("vehicleNumber", { length: 20 }),
+  driverName: varchar("driverName", { length: 100 }),
+  fuelType: mysqlEnum("fuelType", ["petrol", "diesel", "lubricant"]).notNull(),
+  orderedQty: decimal("orderedQty", { precision: 15, scale: 3 }),
+  deliveredQty: decimal("deliveredQty", { precision: 15, scale: 3 }),
+  unloadedQty: decimal("unloadedQty", { precision: 15, scale: 3 }),
+  invoiceNumber: varchar("invoiceNumber", { length: 100 }),
+  invoiceRate: decimal("invoiceRate", { precision: 10, scale: 2 }),
+  invoiceAmount: decimal("invoiceAmount", { precision: 15, scale: 2 }),
+  status: mysqlEnum("status", ["pending_qc", "qc_passed", "qc_failed", "unloaded", "rejected"]).default("pending_qc").notNull(),
+  qcResult: mysqlEnum("qcResult", ["pass", "fail", "conditional"]),
+  qcRemarks: text("qcRemarks"),
+  decisionRemarks: text("decisionRemarks"),
+  notes: text("notes"),
+  recordedBy: int("recordedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FuelDelivery = typeof fuelDeliveries.$inferSelect;
+export type InsertFuelDelivery = typeof fuelDeliveries.$inferInsert;

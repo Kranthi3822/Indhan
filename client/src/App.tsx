@@ -31,8 +31,6 @@ import ReceiptScanner from "./pages/ReceiptScanner";
 import CashHandover from "./pages/CashHandover";
 import UserManagement from "./pages/UserManagement";
 import AuditLog from "./pages/AuditLog";
-import FuelDelivery from "./pages/FuelDelivery";
-import E70Testing from "./pages/E70Testing";
 import MeterApproval from "./pages/MeterApproval";
 import { useAuth } from "./_core/hooks/useAuth";
 import Login from "./pages/Login";
@@ -65,8 +63,6 @@ const ROUTE_ROLES: Record<string, UserRole[]> = {
   "/users":               ["admin", "owner"],
   "/audit-log":           ["admin", "owner", "accountant"],
   "/invite/accept":       ["admin", "owner", "accountant", "incharge", "pump_attendant", "user"],
-  "/fuel-delivery":       ["admin", "owner", "accountant", "incharge"],
-  "/e70-testing":         ["admin", "owner", "accountant", "incharge"],
   "/meter-approval":      ["admin", "owner", "accountant", "incharge"],
 };
 
@@ -132,8 +128,6 @@ function Router() {
         <Route path="/fuel-prices" component={() => <GuardedRoute path="/fuel-prices" component={FuelPrices} />} />
         <Route path="/receipt-scanner" component={() => <GuardedRoute path="/receipt-scanner" component={ReceiptScanner} />} />
         <Route path="/cash-handover" component={() => <GuardedRoute path="/cash-handover" component={CashHandover} />} />
-        <Route path="/fuel-delivery" component={() => <GuardedRoute path="/fuel-delivery" component={FuelDelivery} />} />
-        <Route path="/e70-testing" component={() => <GuardedRoute path="/e70-testing" component={E70Testing} />} />
         <Route path="/meter-approval" component={() => <GuardedRoute path="/meter-approval" component={MeterApproval} />} />
         <Route path="/users" component={() => <GuardedRoute path="/users" component={UserManagement} />} />
         <Route path="/audit-log" component={() => <GuardedRoute path="/audit-log" component={AuditLog} />} />

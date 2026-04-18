@@ -65,8 +65,7 @@ const menuItems = [
   { icon: ScanLine,        label: "Receipt Scanner",     path: "/receipt-scanner",  group: "Fuel", roles: ADMIN_ACCOUNTANT },
   { icon: Package,         label: "Inventory",           path: "/inventory",        group: "Fuel", roles: ADMIN_INCHARGE },
   { icon: FlaskConical,    label: "Daily Stock Register",path: "/daily-stock",      group: "Fuel", roles: ADMIN_INCHARGE },
-  { icon: Truck,           label: "Fuel Delivery & QC",  path: "/fuel-delivery",   group: "Fuel", roles: ADMIN_INCHARGE },
-  { icon: TestTube,        label: "E70 Testing",          path: "/e70-testing",     group: "Fuel", roles: ADMIN_INCHARGE },
+
   // FINANCE
   { icon: Users,           label: "Customers & Credit",  path: "/customers",              group: "Finance", roles: ADMIN_INCHARGE },
   { icon: Receipt,         label: "Expenses",            path: "/expenses",               group: "Finance", roles: ADMIN_INCHARGE },

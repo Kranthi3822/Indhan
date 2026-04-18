@@ -13,7 +13,7 @@ import {
   getPurchaseOrders, createPurchaseOrder, updatePurchaseOrderStatus, getDailyStockStatement,
   getExpenses, createExpense, updateExpenseApproval, getExpenseSummaryByCategory,
   getBankTransactions, createBankTransaction, updateBankReconciliation, getBankSummary,
-  getWeighBridgeRecords, createWeighBridgeRecord, getWeighBridgeSummary,
+
   getDailyReports, getDailyReport, upsertDailyReport, syncFuelStockFromLatestReport,
   saveClosingStock,
   getPLReport,
@@ -257,29 +257,6 @@ const bankRouter = router({
   }),
 });
 
-// ─── WeighBridge Router ───────────────────────────────────────────────────────
-const weighBridgeRouter = router({
-  list: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
-    return getWeighBridgeRecords(input.startDate, input.endDate);
-  }),
-  summary: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
-    return getWeighBridgeSummary(input.startDate, input.endDate);
-  }),
-  create: protectedProcedure.input(z.object({
-    entryDate: safeDate,
-    vehicleNo: z.string().min(1),
-    customerName: z.string().min(1),
-    material: z.string().optional(),
-    grossWeight: z.number(),
-    tareWeight: z.number(),
-    netWeight: z.number(),
-    charges: z.number(),
-  })).mutation(async ({ input }) => {
-    await createWeighBridgeRecord({ ...input, grossWeight: String(input.grossWeight), tareWeight: String(input.tareWeight), netWeight: String(input.netWeight), charges: String(input.charges) });
-    return { success: true };
-  }),
-});
-
 // ─── Reconciliation Router ────────────────────────────────────────────────────
 const reconciliationRouter = router({
   dailyReports: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
@@ -443,7 +420,7 @@ export const appRouter = router({
   expenses: expensesRouter,
   bank: bankRouter,
   bankStatement: bankStatementRouter,
-  weighBridge: weighBridgeRouter,
+
   reconciliation: reconciliationRouter,
   pl: plRouter,
   sales: salesRouter,
@@ -458,8 +435,7 @@ export const appRouter = router({
   users: usersRouter,
   invitations: invitationsRouter,
   auditLog: auditLogRouter,
-  fuelDelivery: fuelDeliveryRouter,
-  e70: e70Router,
+
 });
 
 export type AppRouter = typeof appRouter;

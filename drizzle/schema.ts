@@ -146,23 +146,6 @@ export const bankTransactions = mysqlTable("bank_transactions", {
 export type BankTransaction = typeof bankTransactions.$inferSelect;
 export type InsertBankTransaction = typeof bankTransactions.$inferInsert;
 
-// ─── Weigh Bridge ─────────────────────────────────────────────────────────────
-export const weighBridge = mysqlTable("weigh_bridge", {
-  id: int("id").autoincrement().primaryKey(),
-  ticketDate: varchar("ticketDate", { length: 10 }).notNull(),
-  ticketNo: int("ticketNo"),
-  vehicleNo: varchar("vehicleNo", { length: 20 }),
-  noOfVehicles: int("noOfVehicles").default(1),
-  weight: decimal("weight", { precision: 10, scale: 2 }),
-  amount: decimal("amount", { precision: 10, scale: 2 }),
-  cumulativeAmount: decimal("cumulativeAmount", { precision: 15, scale: 2 }),
-  remarks: text("remarks"),
-  bankDeposit: decimal("bankDeposit", { precision: 10, scale: 2 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type WeighBridge = typeof weighBridge.$inferSelect;
-export type InsertWeighBridge = typeof weighBridge.$inferInsert;
 
 // ─── Daily Reports ────────────────────────────────────────────────────────────
 export const dailyReports = mysqlTable("daily_reports", {

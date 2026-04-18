@@ -14,7 +14,7 @@ const SUPPORTED_SHEETS = [
   { name: "Expenses", description: "Wages, Admin, Electricity, Maintenance etc.", status: "supported" },
   { name: "Daily Stock Statement", description: "Fuel and lubricant inventory levels", status: "supported" },
   { name: "P&L Statement", description: "Profit and loss figures", status: "supported" },
-  { name: "Weigh Bridge", description: "Vehicle and cargo records", status: "coming_soon" },
+
 ];
 
 type ImportStep = "idle" | "uploading" | "done" | "error";

@@ -7,7 +7,7 @@ import {
   salesTransactions, InsertSalesTransaction,
   expenses, InsertExpense,
   bankTransactions, InsertBankTransaction,
-  weighBridge, InsertWeighBridge,
+
   dailyReports, InsertDailyReport,
   purchaseOrders, InsertPurchaseOrder,
   customerPayments, InsertCustomerPayment,
@@ -499,34 +499,6 @@ export async function getBankSummary(startDate: string, endDate: string) {
   return rows[0] ?? null;
 }
 
-// ─── Weigh Bridge ─────────────────────────────────────────────────────────────
-export async function getWeighBridgeRecords(startDate: string, endDate: string) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(weighBridge).where(
-    sql`${weighBridge.ticketDate} >= ${startDate} AND ${weighBridge.ticketDate} <= ${endDate}`
-  ).orderBy(desc(weighBridge.ticketDate));
-}
-
-export async function createWeighBridgeRecord(data: InsertWeighBridge) {
-  const db = await getDb();
-  if (!db) throw new Error("DB not available");
-  await db.insert(weighBridge).values(data);
-}
-
-export async function getWeighBridgeSummary(startDate: string, endDate: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const rows = await db.select({
-    totalVehicles: sql<number>`COALESCE(SUM(noOfVehicles), 0)`,
-    totalAmount: sql<number>`COALESCE(SUM(amount), 0)`,
-    totalBankDeposit: sql<number>`COALESCE(SUM(bankDeposit), 0)`,
-    recordCount: sql<number>`COUNT(*)`,
-  }).from(weighBridge).where(
-    sql`${weighBridge.ticketDate} >= ${startDate} AND ${weighBridge.ticketDate} <= ${endDate}`
-  );
-  return rows[0] ?? null;
-}
 
 // ─── Daily Reports ────────────────────────────────────────────────────────────
 export async function getDailyReports(startDate: string, endDate: string) {

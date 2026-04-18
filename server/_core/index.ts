@@ -59,7 +59,12 @@ async function startServer() {
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${port}/`);
     // Sync fuel stock from latest daily report on startup so Inventory page always shows correct values
-    syncFuelStockFromLatestReport().catch(e => console.warn('[startup] syncFuelStock failed:', e.message));
+    // We wrap this in a check to ensure DATABASE_URL is present
+    if (process.env.DATABASE_URL) {
+      syncFuelStockFromLatestReport().catch(e => console.warn('[startup] syncFuelStock failed:', e.message));
+    } else {
+      console.warn('[startup] DATABASE_URL is not set, skipping initial fuel stock sync.');
+    }
   });
 }
 

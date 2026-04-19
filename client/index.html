@@ -25,15 +25,11 @@
 
   <body>
     <script>
-      // Force unregister all service workers to ensure users get the latest version
+      // Clear service workers once without infinite loop
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           for(let registration of registrations) {
             registration.unregister();
-          }
-          if (registrations.length > 0) {
-            console.log('Unregistered stale service workers, reloading...');
-            window.location.reload();
           }
         });
       }

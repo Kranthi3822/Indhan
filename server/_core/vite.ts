@@ -48,9 +48,12 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "../..", "dist", "public");
-  const indexPath = path.resolve(distPath, "index.html");
+  // Use process.cwd() to get the working directory where the app is running
+  // This ensures we find the dist/public directory relative to the project root
+  const distPath = path.join(process.cwd(), "dist", "public");
+  const indexPath = path.join(distPath, "index.html");
   
+  console.log(`[serveStatic] process.cwd(): ${process.cwd()}`);
   console.log(`[serveStatic] distPath: ${distPath}`);
   console.log(`[serveStatic] indexPath: ${indexPath}`);
   console.log(`[serveStatic] distPath exists: ${fs.existsSync(distPath)}`);

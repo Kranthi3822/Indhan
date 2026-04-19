@@ -269,6 +269,81 @@ export const nozzleRouter = router({
     }),
 
   // ── Get recent daily activity reports (last N days) ─────────────────────────
+  // ─── Integration: Get Nozzle Data for a specific date (for Reconciliation pre-fill) ─
+  getAll: protectedProcedure.query(async () => {
+    return getAllNozzles();
+  }),
+
+  getSummary: protectedProcedure
+    .input(z.object({ date: safeDate }))
+    .query(async ({ input }) => {
+      const sessions = await getSessionsForDate(input.date);
+      let totalPetrol = 0, totalDiesel = 0, totalCollected = 0;
+      for (const session of sessions) {
+        const summary = await getSessionSummary(session.id);
+        totalPetrol += summary.totalPetrolLitres;
+        totalDiesel += summary.totalDieselLitres;
+        totalCollected += summary.totalCollected;
+      }
+      return { totalPetrol, totalDiesel, totalCollected, sessionCount: sessions.length };
+    }),
+
+  getNozzleDataForDate: protectedProcedure
+    .input(z.object({ shiftDate: safeDate }))
+    .query(async ({ input }) => {
+      const sessions = await getSessionsForDate(input.shiftDate);
+      if (sessions.length === 0) return null;
+      
+      let totalPetrol = 0, totalDiesel = 0;
+      let totalCash = 0, totalCard = 0, totalOnline = 0, totalCredit = 0;
+      let totalExpected = 0;
+      const sessionDetails: any[] = [];
+
+      for (const session of sessions) {
+        const summary = await getSessionSummary(session.id);
+        totalPetrol  += summary.totalPetrolLitres;
+        totalDiesel  += summary.totalDieselLitres;
+        totalCash    += summary.totalCash;
+        totalCard    += summary.totalCard;
+        totalOnline  += summary.totalOnline;
+        totalCredit  += summary.totalCredit;
+        totalExpected += summary.totalExpectedSales;
+        
+        sessionDetails.push({
+          sessionId: session.id,
+          staffName: session.staffName,
+          shiftLabel: session.shiftLabel,
+          status: session.status,
+          nozzleSummaries: summary.nozzleSummaries,
+          totalCash: summary.totalCash,
+          totalCard: summary.totalCard,
+          totalOnline: summary.totalOnline,
+          totalCredit: summary.totalCredit,
+          totalCollected: summary.totalCollected,
+          expectedSalesValue: summary.totalExpectedSales,
+          variance: summary.totalCollected - summary.totalExpectedSales,
+          totalPetrolLitres: summary.totalPetrolLitres,
+          totalDieselLitres: summary.totalDieselLitres,
+        });
+      }
+
+      const totalCollected = totalCash + totalCard + totalOnline + totalCredit;
+      return {
+        shiftDate: input.shiftDate,
+        sessions: sessionDetails,
+        totalPetrolLitres: totalPetrol,
+        totalDieselLitres: totalDiesel,
+        totalCash,
+        totalCard,
+        totalOnline,
+        totalCredit,
+        totalCollected,
+        expectedSalesValue: totalExpected,
+        variance: totalCollected - totalExpected,
+        hasOpenSessions: sessions.some(s => s.status === "open"),
+      };
+    }),
+
   getRecentDailyActivity: protectedProcedure
     .input(z.object({ days: z.number().int().min(1).max(90).default(30) }))
     .query(async ({ input }) => {

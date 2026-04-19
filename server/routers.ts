@@ -47,6 +47,9 @@ const dateRangeInput = z.object({
 
 // ─── Dashboard Router ─────────────────────────────────────────────────────────
 const dashboardRouter = router({
+  getStats: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
+    return getDashboardKPIs(input.startDate, input.endDate);
+  }),
   kpis: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
     return getDashboardKPIs(input.startDate, input.endDate);
   }),
@@ -237,22 +240,27 @@ const bankRouter = router({
   summary: protectedProcedure.input(dateRangeInput).query(async ({ input }) => {
     return getBankSummary(input.startDate, input.endDate);
   }),
-  create: protectedProcedure.input(z.object({
+  create: adminProcedure.input(z.object({
     transactionDate: safeDate,
     description: z.string().min(1),
-    amount: z.number(),
-    type: z.enum(["credit", "debit"]),
+    transactionType: z.string().default("Other"),
+    deposit: z.number().optional(),
+    withdrawal: z.number().optional(),
     referenceNo: z.string().optional(),
     notes: z.string().optional(),
   })).mutation(async ({ input }) => {
-    await createBankTransaction({ ...input, amount: String(input.amount) });
+    await createBankTransaction({ 
+      ...input, 
+      deposit: input.deposit ? String(input.deposit) : "0",
+      withdrawal: input.withdrawal ? String(input.withdrawal) : "0"
+    });
     return { success: true };
   }),
-  reconcile: protectedProcedure.input(z.object({
+  reconcile: adminProcedure.input(z.object({
     id: z.number(),
-    isReconciled: z.boolean(),
+    status: z.string(),
   })).mutation(async ({ input }) => {
-    await updateBankReconciliation(input.id, input.isReconciled);
+    await updateBankTransactionStatus(input.id, input.status);
     return { success: true };
   }),
 });
@@ -264,6 +272,10 @@ const reconciliationRouter = router({
   }),
   report: protectedProcedure.input(z.object({ date: safeDate })).query(async ({ input }) => {
     return getDailyReport(input.date);
+  }),
+  // Alias for frontend compatibility
+  byDate: protectedProcedure.input(z.object({ reportDate: safeDate })).query(async ({ input }) => {
+    return getDailyReport(input.reportDate);
   }),
   saveReport: protectedProcedure.input(z.object({
     reportDate: safeDate,
@@ -287,6 +299,17 @@ const reconciliationRouter = router({
     const data: any = { ...input };
     ["openingStockPetrol", "openingStockDiesel", "purchasePetrol", "purchaseDiesel", "salesPetrol", "salesDiesel", "closingStockPetrol", "closingStockDiesel", "testingPetrol", "testingDiesel", "totalCashCollected", "totalDigitalCollected", "totalCreditSales", "totalExpenses", "netCashInHand"].forEach(key => {
       if (data[key] !== undefined) data[key] = String(data[key]);
+    });
+    await upsertDailyReport(data);
+    return { success: true };
+  }),
+  // Alias for frontend compatibility
+  upsert: protectedProcedure.input(z.any()).mutation(async ({ input }) => {
+    const data: any = { ...input };
+    // Handle string conversions if numbers are passed
+    const fields = ["openingStockPetrol", "openingStockDiesel", "purchasePetrol", "purchaseDiesel", "salesPetrol", "salesDiesel", "closingStockPetrol", "closingStockDiesel", "testingPetrol", "testingDiesel", "totalCashCollected", "totalDigitalCollected", "totalCreditSales", "totalExpenses", "netCashInHand", "cashSales", "cardSales", "onlineCollected", "bankDeposit", "closingCash"];
+    fields.forEach(key => {
+      if (data[key] !== undefined && typeof data[key] === 'number') data[key] = String(data[key]);
     });
     await upsertDailyReport(data);
     return { success: true };
@@ -334,8 +357,8 @@ const salesRouter = router({
 
 // ─── Sathi Agent Router (AI) ──────────────────────────────────────────────────
 const sathiRouter = router({
-  chat: protectedProcedure.input(z.object({
-    message: z.string(),
+  ask: protectedProcedure.input(z.object({
+    question: z.string(),
     history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).optional(),
   })).mutation(async ({ input, ctx }) => {
     const systemPrompt = `You are "Sathi", the intelligent operations assistant for Indhan Fuel Station OS. 
@@ -344,11 +367,13 @@ const sathiRouter = router({
     Provide helpful, data-driven advice on fuel station management, inventory, staff, and financial reconciliation. 
     Be professional, concise, and context-aware.`;
     
-    return invokeLLM({
+    const response = await invokeLLM({
       systemPrompt,
-      userPrompt: input.message,
+      userPrompt: input.question,
       history: input.history,
     });
+    
+    return { answer: response };
   }),
 });
 
@@ -412,6 +437,10 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
+    }),
+    needsSetup: publicProcedure.query(async () => {
+      const count = await getUserCount();
+      return count === 0;
     }),
   }),
   dashboard: dashboardRouter,

@@ -484,4 +484,77 @@ export const cashHandoverRouter = router({
         await pool.end();
       }
     }),
+
+  // ── Auto-match: automatically confirm all nozzles if net cash is zero or based on recorded values ─
+  autoMatch: operationalProcedure
+    .input(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }))
+    .mutation(async ({ input, ctx }) => {
+      const pool = await getDb();
+      const conn = await pool.getConnection();
+      try {
+        // Get all active nozzles
+        const [nozzles] = await conn.execute<any[]>(
+          `SELECT id FROM nozzles WHERE is_active = 1`
+        );
+
+        // Get cash sales per nozzle for the date
+        const [cashSales] = await conn.execute<any[]>(
+          `SELECT cc.nozzle_id, SUM(cc.amount) as cashTotal
+           FROM cash_collections cc
+           JOIN shift_sessions ss ON ss.id = cc.session_id
+           WHERE ss.shift_date = ? AND cc.payment_mode = 'cash' AND cc.nozzle_id IS NOT NULL
+           GROUP BY cc.nozzle_id`,
+          [input.date]
+        );
+        const cashSalesMap: Record<number, number> = {};
+        for (const row of cashSales) {
+          cashSalesMap[row.nozzle_id] = Number(row.cashTotal ?? 0);
+        }
+
+        // Get cash expenses per nozzle
+        const [cashExpenses] = await conn.execute<any[]>(
+          `SELECT nozzle_id, SUM(amount) as expTotal
+           FROM expenses
+           WHERE expenseDate = ? AND payment_source = 'cash_nozzle' AND nozzle_id IS NOT NULL
+           GROUP BY nozzle_id`,
+          [input.date]
+        );
+        const cashExpMap: Record<number, number> = {};
+        for (const row of cashExpenses) {
+          cashExpMap[row.nozzle_id] = Number(row.expTotal ?? 0);
+        }
+
+        const confirmedBy = ctx.user?.name ?? ctx.user?.openId ?? "manager";
+        let matchCount = 0;
+
+        for (const n of nozzles) {
+          const cashCollected = cashSalesMap[n.id] ?? 0;
+          const cashExpenses = cashExpMap[n.id] ?? 0;
+          const netCash = cashCollected - cashExpenses;
+
+          // Only auto-match if there's actual activity or we want to zero out pending ones
+          await conn.execute(
+            `INSERT INTO cash_handover_sessions
+               (handover_date, nozzle_id, cash_collected, cash_expenses, net_cash, actual_amount, variance, confirmedAt, confirmed_by, notes)
+             VALUES (?, ?, ?, ?, ?, ?, 0, NOW(), ?, 'Auto-matched')
+             ON DUPLICATE KEY UPDATE
+               cash_collected = VALUES(cash_collected),
+               cash_expenses = VALUES(cash_expenses),
+               net_cash = VALUES(net_cash),
+               actual_amount = VALUES(actual_amount),
+               variance = 0,
+               confirmedAt = NOW(),
+               confirmed_by = VALUES(confirmed_by),
+               notes = VALUES(notes)`,
+            [input.date, n.id, cashCollected, cashExpenses, netCash, netCash, confirmedBy]
+          );
+          matchCount++;
+        }
+
+        return { success: true, message: `Auto-matched ${matchCount} nozzles for ${input.date}` };
+      } finally {
+        conn.release();
+        await pool.end();
+      }
+    }),
 });

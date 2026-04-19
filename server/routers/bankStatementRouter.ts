@@ -238,4 +238,44 @@ Rules:
     await pool.end();
     return { success: true };
   }),
+
+  // Alias for frontend compatibility (BankStatement.tsx)
+  list: protectedProcedure.input(z.object({
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })).query(async ({ input }) => {
+    const pool = await getDb();
+    const [rows] = await pool.execute(
+      `SELECT bt.* FROM bank_transactions bt
+       WHERE bt.transactionDate BETWEEN ? AND ?
+       ORDER BY bt.transactionDate DESC`,
+      [input.startDate, input.endDate]
+    );
+    await pool.end();
+    return rows as any[];
+  }),
+
+  summary: protectedProcedure.input(z.object({
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })).query(async ({ input }) => {
+    const pool = await getDb();
+    const [rows] = await pool.execute(
+      `SELECT 
+         COUNT(*) as count,
+         SUM(deposit) as totalDeposits,
+         SUM(withdrawal) as totalWithdrawals
+       FROM bank_transactions
+       WHERE transactionDate BETWEEN ? AND ?`,
+      [input.startDate, input.endDate]
+    );
+    await pool.end();
+    const summary = rows[0] as any;
+    return {
+      count: Number(summary?.count ?? 0),
+      totalDeposits: Number(summary?.totalDeposits ?? 0),
+      totalWithdrawals: Number(summary?.totalWithdrawals ?? 0),
+      netChange: Number(summary?.totalDeposits ?? 0) - Number(summary?.totalWithdrawals ?? 0),
+    };
+  }),
 });

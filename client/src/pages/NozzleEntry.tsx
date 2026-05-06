@@ -495,12 +495,12 @@ export default function NozzleEntry() {
                     </span>
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Opening Reading (Litres)</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Opening Meter Reading</p>
                     <div className="flex items-center justify-between">
                       {hasPrev ? (
                         <p className="text-xl font-bold tabular-nums">
                           {prev.reading!.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          <span className="text-sm font-normal text-muted-foreground ml-1">L</span>
+                          
                         </p>
                       ) : (
                         <p className="text-sm text-muted-foreground italic">No previous record — will default to 0</p>
@@ -758,13 +758,13 @@ export default function NozzleEntry() {
 
                     {/* Opening (read-only) */}
                     <div className="mb-3 p-2.5 rounded-lg bg-muted/30 border border-border/30">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Opening Reading (Previous Shift Closing)</p>
-                      <p className="text-base font-bold tabular-nums">{opening > 0 ? opening.toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "—"} L</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Opening Meter Reading (Previous Shift)</p>
+                      <p className="text-base font-bold tabular-nums">{opening > 0 ? opening.toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "—"}</p>
                     </div>
 
                     {/* Closing input */}
                     <div className="space-y-1 mb-3">
-                      <Label className="text-xs font-medium">Closing Meter Reading (Litres) <span className="text-destructive">*</span></Label>
+                      <Label className="text-xs font-medium">Closing Meter Reading <span className="text-destructive">*</span></Label>
                       <Input
                         type="number"
                         step="0.01"
@@ -777,7 +777,7 @@ export default function NozzleEntry() {
 
                     {/* Testing qty input */}
                     <div className="space-y-1 mb-3">
-                      <Label className="text-xs font-medium text-muted-foreground">Testing / Calibration Quantity (Litres)</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">Testing / Calibration Qty (Litres)</Label>
                       <Input
                         type="number"
                         step="0.01"

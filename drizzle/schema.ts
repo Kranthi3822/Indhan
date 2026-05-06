@@ -554,6 +554,10 @@ export const shiftSessions = mysqlTable("shift_sessions", {
   closedAt: timestamp("closed_at"),
   status: mysqlEnum("status", ["open", "closed", "reconciled"]).default("open"),
   notes: text("notes"),
+  inchargeApprovalStatus: mysqlEnum("incharge_approval_status", ["pending_approval", "approved", "rejected"]),
+  approvedByName: varchar("approved_by_name", { length: 100 }),
+  approvedAt: timestamp("approved_at"),
+  approvalRemarks: text("approval_remarks"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

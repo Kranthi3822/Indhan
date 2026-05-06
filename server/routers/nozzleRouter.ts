@@ -307,7 +307,7 @@ export const nozzleRouter = router({
         totalCard    += summary.totalCard;
         totalOnline  += summary.totalOnline;
         totalCredit  += summary.totalCredit;
-        totalExpected += summary.totalExpectedSales;
+        totalExpected += summary.expectedSalesValue;
         
         sessionDetails.push({
           sessionId: session.id,
@@ -320,8 +320,8 @@ export const nozzleRouter = router({
           totalOnline: summary.totalOnline,
           totalCredit: summary.totalCredit,
           totalCollected: summary.totalCollected,
-          expectedSalesValue: summary.totalExpectedSales,
-          variance: summary.totalCollected - summary.totalExpectedSales,
+          expectedSalesValue: summary.expectedSalesValue,
+          variance: summary.totalCollected - summary.expectedSalesValue,
           totalPetrolLitres: summary.totalPetrolLitres,
           totalDieselLitres: summary.totalDieselLitres,
         });
@@ -366,16 +366,14 @@ export const nozzleRouter = router({
       }
       return results.reverse(); // chronological order
     }),
-
-  // ── Nozzle data for Reconciliation page integration ────────────────────────
-  getNozzleDataForDate: protectedProcedure
+  // ── Nozzle data for Reconciliation page integration ──────────────────────────
+  getNozzleDataForDateV2: protectedProcedure
     .input(z.object({ shiftDate: safeDate }))
     .query(async ({ input }) => {
       const sessions = await getSessionsForDate(input.shiftDate);
       if (sessions.length === 0) return null;
 
-      let totalPetrolLitres = 0;
-      let totalDieselLitres = 0;
+      let totalPetrolLitres = 0;      let totalDieselLitres = 0;
       let totalCash = 0;
       let totalCard = 0;
       let totalOnline = 0;
@@ -708,9 +706,62 @@ export const nozzleRouter = router({
         `);
       }
       return { success: true, url, fileKey };
+    }),  // ── Incharge: get all shifts for today (real-time monitor) ─────────────────
+  getActiveShifts: protectedProcedure
+    .input(z.object({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const targetDate = input.date ?? new Date().toISOString().slice(0, 10);
+      const rows = await db.execute(sql`
+        SELECT
+          ss.id AS sessionId,
+          ss.shift_date AS shiftDate,
+          ss.shift_label AS shiftLabel,
+          ss.staff_name AS staffName,
+          ss.status,
+          ss.incharge_approval_status AS approvalStatus,
+          ss.approved_by_name AS approvedByName,
+          ss.approved_at AS approvedAt,
+          ss.approval_remarks AS approvalRemarks,
+          ss.created_at AS startedAt,
+          ss.updated_at AS updatedAt,
+          COUNT(DISTINCT nr.nozzle_id) AS nozzleCount,
+          SUM(CASE WHEN nr.reading_type = 'closing' AND nr.photo_url IS NOT NULL THEN 1 ELSE 0 END) AS photosUploaded,
+          COALESCE(
+            (SELECT SUM(cc.amount) FROM cash_collections cc WHERE cc.session_id = ss.id), 0
+          ) AS totalCollected,
+          COALESCE(
+            (SELECT SUM(cc.amount) FROM cash_collections cc WHERE cc.session_id = ss.id AND cc.payment_mode = 'cash'), 0
+          ) AS cashCollected,
+          COALESCE(
+            (SELECT SUM(cc.amount) FROM cash_collections cc WHERE cc.session_id = ss.id AND cc.payment_mode != 'cash'), 0
+          ) AS digitalCollected
+        FROM shift_sessions ss
+        LEFT JOIN nozzle_readings nr ON nr.session_id = ss.id
+        WHERE ss.shift_date = ${targetDate}
+        GROUP BY ss.id
+        ORDER BY ss.id ASC
+      `);
+      const sessions = (rows as unknown as any[][])[0] ?? [];
+      // Enrich with per-nozzle reading summary
+      const enriched = await Promise.all(sessions.map(async (s: any) => {
+        const summary = await getSessionSummary(s.sessionId);
+        return {
+          ...s,
+          totalPetrolLitres: summary.totalPetrolLitres,
+          totalDieselLitres: summary.totalDieselLitres,
+          expectedSalesValue: summary.expectedSalesValue,
+          variance: summary.variance,
+          nozzleSummaries: summary.nozzleSummaries,
+        };
+      }));
+      return enriched;
     }),
 
-  // ── Pump Attendant: submit closed shift for Incharge review ─────────────
+  // ── Pump Attendant: submit closed shift for Incharge review ─────────────────
   submitForApproval: protectedProcedure
     .input(z.object({
       sessionId: z.number().int().positive(),

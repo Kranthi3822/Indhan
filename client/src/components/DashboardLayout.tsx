@@ -30,7 +30,7 @@ import {
   Landmark, TrendingUp, FileUp, Settings, LogOut,
   PanelLeft, Fuel, UserCheck, ChevronRight, Bell, Sun, Moon, Info,
   Wrench, IndianRupee, ScanFace, Gauge, Tag, ScanLine, Banknote, ClipboardList, Upload, FlaskConical, UserCog, ClipboardCheck,
-  Truck, ShieldCheck, TestTube,
+  Truck, ShieldCheck, TestTube, Activity,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -60,6 +60,7 @@ const menuItems = [
   { icon: RefreshCw,       label: "Reconciliation",  path: "/reconciliation", group: "Operations", roles: ADMIN_ACCOUNTANT },
   { icon: Banknote,        label: "Cash Handover",   path: "/cash-handover",  group: "Operations", roles: ADMIN_INCHARGE },
   { icon: ShieldCheck,     label: "Meter Approval",   path: "/meter-approval",  group: "Operations", roles: ADMIN_INCHARGE },
+  { icon: Activity,         label: "Shift Monitor",    path: "/shift-monitor",   group: "Operations", roles: ADMIN_INCHARGE },
   // FUEL MANAGEMENT
   { icon: Tag,             label: "Fuel Prices",         path: "/fuel-prices",      group: "Fuel", roles: ADMIN_INCHARGE },
   { icon: ScanLine,        label: "Receipt Scanner",     path: "/receipt-scanner",  group: "Fuel", roles: ADMIN_ACCOUNTANT },

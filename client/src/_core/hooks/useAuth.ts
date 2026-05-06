@@ -20,7 +20,7 @@ export function useAuth(options?: UseAuthOptions) {
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
-      utils.auth.me.setData(undefined, null);
+      utils.auth.me.setData(undefined, undefined);
     },
   });
 
@@ -37,7 +37,7 @@ export function useAuth(options?: UseAuthOptions) {
         console.error("[logout] error", error);
       }
     } finally {
-      utils.auth.me.setData(undefined, null);
+      utils.auth.me.setData(undefined, undefined);
       // Full page navigation to login — clears all in-memory state and
       // ensures the OAuth portal gets a fresh request with no stale tokens.
       window.location.href = getLoginUrl();

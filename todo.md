@@ -794,3 +794,14 @@
 - [x] Add Incharge review step (step 4): after collections, pump attendant submits for review; submitForApproval mutation sets status to pending_approval; Incharge approves from Meter Approval page
 - [x] Add meter photo upload for closing readings (S3 storage, optional, per-nozzle) — camera capture + file upload, instant preview, upload to S3 via uploadMeterPhoto mutation
 - [x] TypeScript: 0 errors after all changes
+
+## Fixes & Features (May 6 Session)
+- [x] NozzleEntry: Remove "LITRES" from opening/closing meter reading labels — use "METER READING"
+- [x] NozzleEntry: Remove "L" suffix from opening meter reading value display
+- [x] Shift Monitor: Add getActiveShifts backend procedure (all sessions for today with metrics, per-nozzle enrichment)
+- [x] Shift Monitor: Build ShiftMonitor.tsx real-time dashboard with auto-refresh (30s), shift cards, status badges, approve/reject
+- [x] Shift Monitor: Add sidebar link under Operations (admin/owner/incharge), route /shift-monitor, App.tsx route
+- [x] Meter Approval: submitForApproval, approveSession, rejectSession backend procedures wired in nozzleRouter
+- [x] Meter Approval: MeterApproval.tsx uses approveSession procedure (already wired in previous session)
+- [x] DB migration: incharge_approval_status, approved_by_name, approved_at, approval_remarks, photo_url, photo_key columns applied
+- [x] Fixed 35 TypeScript errors from GitHub merge (duplicate procedures, wrong field names, type mismatches)

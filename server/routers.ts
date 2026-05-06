@@ -225,9 +225,9 @@ const expensesRouter = router({
   }),
   approve: adminProcedure.input(z.object({
     id: z.number(),
-    status: z.enum(["Approved", "Rejected"]),
+    status: z.enum(["approved", "rejected"]),
   })).mutation(async ({ input, ctx }) => {
-    await updateExpenseApproval(input.id, input.status, ctx.user.name);
+    await updateExpenseApproval(input.id, input.status, ctx.user.name ?? 'admin');
     return { success: true };
   }),
 });
@@ -250,9 +250,12 @@ const bankRouter = router({
     notes: z.string().optional(),
   })).mutation(async ({ input }) => {
     await createBankTransaction({ 
-      ...input, 
+      transactionDate: input.transactionDate,
+      description: input.description,
+      transactionType: (input.transactionType as any) || 'Cash',
       deposit: input.deposit ? String(input.deposit) : "0",
-      withdrawal: input.withdrawal ? String(input.withdrawal) : "0"
+      withdrawal: input.withdrawal ? String(input.withdrawal) : "0",
+      referenceNo: input.referenceNo,
     });
     return { success: true };
   }),
@@ -260,7 +263,7 @@ const bankRouter = router({
     id: z.number(),
     status: z.string(),
   })).mutation(async ({ input }) => {
-    await updateBankTransactionStatus(input.id, input.status);
+    await updateBankReconciliation(input.id, (input.status as any));
     return { success: true };
   }),
 });
@@ -315,7 +318,7 @@ const reconciliationRouter = router({
     return { success: true };
   }),
   syncStock: adminProcedure.input(z.object({ reportDate: safeDate })).mutation(async ({ input }) => {
-    await syncFuelStockFromLatestReport(input.reportDate);
+    await syncFuelStockFromLatestReport();
     return { success: true };
   }),
   saveClosingStock: protectedProcedure.input(z.object({
@@ -323,7 +326,7 @@ const reconciliationRouter = router({
     closingStockPetrol: z.number(),
     closingStockDiesel: z.number(),
   })).mutation(async ({ input }) => {
-    await saveClosingStock(input.reportDate, String(input.closingStockPetrol), String(input.closingStockDiesel));
+    await saveClosingStock({ reportDate: input.reportDate, closingStockPetrol: input.closingStockPetrol, closingStockDiesel: input.closingStockDiesel });
     return { success: true };
   }),
 });
@@ -350,7 +353,15 @@ const salesRouter = router({
     customerId: z.number().optional(),
     notes: z.string().optional(),
   })).mutation(async ({ input }) => {
-    await createSalesTransaction({ ...input, quantity: String(input.quantity), rate: String(input.rate), amount: String(input.amount) });
+    await createSalesTransaction({ 
+      transactionDate: input.saleDate,
+      productId: input.productId,
+      quantity: String(input.quantity),
+      unitPrice: String(input.rate),
+      totalAmount: String(input.amount),
+      paymentMethod: input.paymentMode === 'digital' ? 'online' : input.paymentMode as any,
+      notes: input.notes,
+    });
     return { success: true };
   }),
 });
@@ -367,13 +378,14 @@ const sathiRouter = router({
     Provide helpful, data-driven advice on fuel station management, inventory, staff, and financial reconciliation. 
     Be professional, concise, and context-aware.`;
     
-    const response = await invokeLLM({
-      systemPrompt,
-      userPrompt: input.question,
-      history: input.history,
-    });
-    
-    return { answer: response };
+    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+      { role: 'system', content: systemPrompt },
+      ...(input.history ?? []).map(h => ({ role: h.role as 'user' | 'assistant', content: h.content })),
+      { role: 'user', content: input.question },
+    ];
+    const response = await invokeLLM({ messages });
+    const answer = response?.choices?.[0]?.message?.content ?? 'Sorry, I could not process your request.';
+    return { answer };
   }),
 });
 
@@ -464,6 +476,8 @@ export const appRouter = router({
   users: usersRouter,
   invitations: invitationsRouter,
   auditLog: auditLogRouter,
+  fuelDelivery: fuelDeliveryRouter,
+  e70: e70Router,
 
 });
 

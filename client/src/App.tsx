@@ -32,6 +32,7 @@ import CashHandover from "./pages/CashHandover";
 import UserManagement from "./pages/UserManagement";
 import AuditLog from "./pages/AuditLog";
 import MeterApproval from "./pages/MeterApproval";
+import ShiftMonitor from "./pages/ShiftMonitor";
 import { useAuth } from "./_core/hooks/useAuth";
 import Login from "./pages/Login";
 
@@ -129,6 +130,7 @@ function Router() {
         <Route path="/receipt-scanner" component={() => <GuardedRoute path="/receipt-scanner" component={ReceiptScanner} />} />
         <Route path="/cash-handover" component={() => <GuardedRoute path="/cash-handover" component={CashHandover} />} />
         <Route path="/meter-approval" component={() => <GuardedRoute path="/meter-approval" component={MeterApproval} />} />
+        <Route path="/shift-monitor" component={() => <GuardedRoute path="/shift-monitor" component={ShiftMonitor} />} />
         <Route path="/users" component={() => <GuardedRoute path="/users" component={UserManagement} />} />
         <Route path="/audit-log" component={() => <GuardedRoute path="/audit-log" component={AuditLog} />} />
         <Route component={NotFound} />

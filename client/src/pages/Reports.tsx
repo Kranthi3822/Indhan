@@ -27,7 +27,7 @@ export default function Reports() {
 
   // Use the dedicated P&L report endpoint — it respects the date range for BOTH revenue and expenses
   const { data: plReport, isLoading } = trpc.pl.report.useQuery({ startDate, endDate });
-  const { data: dailyTrend } = trpc.reconciliation.list.useQuery({ startDate, endDate });
+  const { data: dailyTrend } = trpc.reconciliation.dailyReports.useQuery({ startDate, endDate });
 
   const totalRevenue = Number(plReport?.totalRevenue ?? 0);
   const totalExpenses = Number(plReport?.totalExpenses ?? 0);

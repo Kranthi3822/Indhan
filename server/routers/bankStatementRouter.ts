@@ -260,7 +260,7 @@ Rules:
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   })).query(async ({ input }) => {
     const pool = await getDb();
-    const [rows] = await pool.execute(
+    const [rows] = await pool.execute<any[]>(
       `SELECT 
          COUNT(*) as count,
          SUM(deposit) as totalDeposits,
@@ -270,7 +270,7 @@ Rules:
       [input.startDate, input.endDate]
     );
     await pool.end();
-    const summary = rows[0] as any;
+    const summary = (rows as any[])[0] as any;
     return {
       count: Number(summary?.count ?? 0),
       totalDeposits: Number(summary?.totalDeposits ?? 0),

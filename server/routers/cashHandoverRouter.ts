@@ -486,7 +486,7 @@ export const cashHandoverRouter = router({
     }),
 
   // ── Auto-match: automatically confirm all nozzles if net cash is zero or based on recorded values ─
-  autoMatch: operationalProcedure
+  autoMatchNozzles: operationalProcedure
     .input(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }))
     .mutation(async ({ input, ctx }) => {
       const pool = await getDb();

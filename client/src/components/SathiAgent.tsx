@@ -45,7 +45,7 @@ export default function SathiAgent() {
         {
           id: Date.now().toString(),
           role: "assistant",
-          content: data.answer,
+          content: String(data.answer ?? ''),
           timestamp: new Date(),
         },
       ]);

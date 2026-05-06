@@ -396,8 +396,8 @@ export default function Expenses() {
                         {STATUS_ICON[e.approvalStatus ?? "approved"]}
                         {e.approvalStatus === "pending" && (
                           <div className="flex gap-1">
-                            <button onClick={() => approveExpense.mutate({ id: e.id, status: "approved", approvedBy: "Manager" })} className="text-[9px] text-green-400 hover:underline">✓</button>
-                            <button onClick={() => approveExpense.mutate({ id: e.id, status: "rejected", approvedBy: "Manager" })} className="text-[9px] text-red-400 hover:underline">✗</button>
+                            <button onClick={() => approveExpense.mutate({ id: e.id, status: "approved" })} className="text-[9px] text-green-400 hover:underline">✓</button>
+                            <button onClick={() => approveExpense.mutate({ id: e.id, status: "rejected" })} className="text-[9px] text-red-400 hover:underline">✗</button>
                           </div>
                         )}
                       </div>

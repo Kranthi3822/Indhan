@@ -1,0 +1,129 @@
+# GitHub Direct Changes — Review & Reference
+
+**Date:** May 9, 2026  
+**Reviewed by:** Manus AI  
+**Branch:** `main` (remote: `user_github`)  
+**Commits pulled:** 2 new commits (`dc9c038` → `b4638d2`)
+
+---
+
+## Summary of Changes
+
+Two files were added directly to the GitHub repository by Rajeev. No existing files were modified.
+
+| File | Type | Purpose |
+|---|---|---|
+| `reset-admin-password.mjs` | New file | One-time admin password reset script for Railway shell |
+| `test` | New file | Placeholder test file (content: `test`) |
+
+---
+
+## File 1: `reset-admin-password.mjs`
+
+### What It Does
+
+This is a **one-time operational utility script** designed to be run via the Railway shell when the admin user cannot log in due to a missing or incorrect `passwordHash` in the production database. It connects directly to the MySQL database, lists all users, identifies the first admin/owner account, and updates their `passwordHash` with a freshly bcrypt-hashed version of the supplied password.
+
+### How to Use It
+
+The script is invoked from the Railway shell with environment variables:
+
+```bash
+# Reset password for the first admin user found
+NEW_PASSWORD=YourNewPassword node reset-admin-password.mjs
+
+# Reset password for a specific email
+NEW_PASSWORD=YourNewPassword ADMIN_EMAIL=pratap@servcrust.com node reset-admin-password.mjs
+```
+
+**Prerequisites on Railway:**
+- `DATABASE_URL` must be set (it is, via Railway's MySQL service)
+- `NEW_PASSWORD` must be provided as an env var at runtime
+- `ADMIN_EMAIL` is optional — defaults to the first admin/owner user found
+
+### What It Does Step by Step
+
+1. Reads `DATABASE_URL` and `NEW_PASSWORD` from environment — exits with error if either is missing.
+2. Connects to MySQL via `mysql2/promise`.
+3. Runs `SELECT id, email, name, role, passwordHash IS NOT NULL AS hasPassword FROM users` and prints a table of all users so the operator can confirm who will be updated.
+4. Determines the target email — either from `ADMIN_EMAIL` env var or auto-selects the first `admin`/`owner` role user.
+5. Hashes the new password using `bcryptjs` with salt rounds = 12.
+6. Runs `UPDATE users SET passwordHash = ?, loginMethod = 'email' WHERE email = ?`.
+7. Confirms success or exits with error if no matching user was found.
+
+### Code Quality Assessment
+
+The script is well-structured and safe for one-time operational use. A few observations:
+
+- **Good:** Uses parameterised queries (`?` placeholders) — no SQL injection risk.
+- **Good:** Validates required env vars before connecting to DB.
+- **Good:** Prints all users before updating — gives operator full visibility.
+- **Good:** Sets `loginMethod = 'email'` alongside the hash — ensures the login flow works end-to-end.
+- **Note:** The script uses top-level `await` which requires Node.js 14.8+ and the `.mjs` extension — both are satisfied.
+- **Recommendation:** Add this file to `.gitignore` after use, or delete it from the repo once the production password issue is resolved, to avoid it being accidentally run again.
+
+### Dependency Check
+
+The script imports `mysql2` and `bcryptjs` — both are already in `package.json` as production dependencies. No new packages needed.
+
+---
+
+## File 2: `test`
+
+### What It Does
+
+A plain text file containing only the word `test`. This appears to be a connectivity/commit test to verify GitHub write access was working correctly.
+
+### Recommendation
+
+This file should be deleted from the repository — it has no functional purpose and will appear in production deployments.
+
+```bash
+# Remove via git
+git rm test
+git commit -m "chore: remove test placeholder file"
+git push user_github main
+```
+
+---
+
+## Action Items
+
+| # | Action | Priority | Who |
+|---|---|---|---|
+| 1 | Run `reset-admin-password.mjs` via Railway shell to fix `pratap@servcrust.com` login | **Immediate** | Rajeev |
+| 2 | Verify login works at `indhan.ai` after script runs | **Immediate** | Rajeev |
+| 3 | Delete `test` file from repo | Low | Rajeev / Manus |
+| 4 | Consider adding `reset-admin-password.mjs` to `.gitignore` or deleting after use | Low | Rajeev / Manus |
+
+---
+
+## How to Run the Password Reset on Railway
+
+1. Go to [Railway](https://railway.app) → your project → **app service** → **Settings** → **Deploy** → open the **Railway Shell**.
+2. In the shell, run:
+   ```bash
+   NEW_PASSWORD=Indhan@2026 ADMIN_EMAIL=pratap@servcrust.com node reset-admin-password.mjs
+   ```
+3. You should see a table of users and then `✅ Password reset for pratap@servcrust.com`.
+4. Go to `https://indhan.ai` and log in with:
+   - **Email:** `pratap@servcrust.com`
+   - **Password:** `Indhan@2026`
+5. Change the password immediately after first login.
+
+---
+
+## Current Repo State After Pull
+
+| Metric | Value |
+|---|---|
+| Latest local commit | `b4638d2` |
+| Latest remote commit | `b4638d2` |
+| Sync status | In sync — no pending changes |
+| New files added | 2 (`reset-admin-password.mjs`, `test`) |
+| Existing files modified | 0 |
+| Conflicts | None |
+
+---
+
+*Document generated by Manus AI — May 9, 2026*
